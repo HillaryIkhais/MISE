@@ -4,10 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Case, Stats } from "@/lib/types";
 import { fetchCases, fetchStats } from "@/lib/api";
-import { Button } from "@/components/shared/Button";
-import { StateBadge } from "@/components/shared/StateBadge";
-import { formatTime, humanize } from "@/lib/utils";
-import { ArrowRight, Phone, CheckCircle2, Clock, Zap } from "lucide-react";
+import { humanize } from "@/lib/utils";
 
 export default function OverviewPage() {
   const [cases, setCases] = useState<Case[]>([]);
@@ -16,10 +13,7 @@ export default function OverviewPage() {
 
   useEffect(() => {
     Promise.all([fetchCases(), fetchStats()])
-      .then(([c, s]) => {
-        setCases(c);
-        setStats(s);
-      })
+      .then(([c, s]) => { setCases(c); setStats(s); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -27,106 +21,75 @@ export default function OverviewPage() {
   const primary = cases[0];
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="font-mono text-[10px] tracking-[0.25em] text-mise-muted uppercase mb-2">
+    <div style={{ padding: 32, maxWidth: 1280, margin: "0 auto" }}>
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "#7c7a72", textTransform: "uppercase", marginBottom: 8 }}>
           Operations
         </div>
-        <h1 className="text-2xl font-display font-semibold text-mise-ink">
+        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: "#e8e6e1" }}>
           Active Incidents
         </h1>
-        <p className="text-sm text-mise-muted mt-1">
+        <p style={{ fontSize: 14, color: "#7c7a72", marginTop: 4 }}>
           Incidents requiring verified real-world action.
         </p>
       </div>
 
       {loading ? (
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-32 bg-mise-surface border border-mise-border rounded-xl animate-pulse"
-            />
+            <div key={i} style={{ height: 120, background: "#111114", border: "1px solid #232328", borderRadius: 14 }} />
           ))}
         </div>
       ) : (
         <>
-          {/* Primary incident */}
           {primary && (
-            <Link href={`/demo/incident?id=${primary.id}`}>
-              <div className="border border-mise-border rounded-2xl bg-mise-surface p-6 mb-6 hover:border-mise-blue/30 transition-all duration-300 cursor-pointer group">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="font-mono text-[10px] tracking-widest text-mise-muted uppercase">
-                        Incident #{primary.id.split("_")[1]?.slice(0, 4) || "1842"}
-                      </span>
-                      <StateBadge state={primary.state} size="sm" pulse />
-                    </div>
-                    <h2 className="text-lg font-bold text-mise-ink mb-2">
-                      Critical Delivery Recovery
-                    </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                      <div>
-                        <div className="font-mono text-[9px] tracking-wider text-mise-faint uppercase mb-1">
-                          Required
-                        </div>
-                        <div className="text-sm font-bold text-mise-ink">
-                          4 Units
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-mono text-[9px] tracking-wider text-mise-faint uppercase mb-1">
-                          Supplier
-                        </div>
-                        <div className="text-sm font-bold text-mise-ink">
-                          {primary.location_name}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-mono text-[9px] tracking-wider text-mise-faint uppercase mb-1">
-                          Deadline
-                        </div>
-                        <div className="text-sm font-bold text-mise-ink">
-                          Tomorrow · 2:00 PM
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-mono text-[9px] tracking-wider text-mise-faint uppercase mb-1">
-                          Next Action
-                        </div>
-                        <div className="text-sm font-bold text-mise-blue">
-                          {primary.next_action?.label || "—"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ArrowRight className="w-5 h-5 text-mise-blue" />
-                  </div>
+            <Link href={"/demo/incident?id=" + primary.id} style={{ textDecoration: "none" }}>
+              <div style={{ border: "1px solid #232328", borderRadius: 18, background: "#111114", padding: 24, marginBottom: 24, cursor: "pointer", transition: "border-color 0.3s" }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(47,107,255,0.3)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#232328")}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.15em", color: "#7c7a72", textTransform: "uppercase" }}>
+                    Incident #{primary.id.split("_")[1]?.slice(0, 4) || "1842"}
+                  </span>
+                  <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800, color: "#dc2626", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)" }}>
+                    BLOCKED
+                  </span>
                 </div>
-
-                {/* State flow */}
-                <div className="mt-5 flex items-center gap-2 text-[10px] font-mono tracking-wide overflow-x-auto">
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: "#e8e6e1", marginBottom: 12 }}>
+                  Critical Delivery Recovery
+                </h2>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 20 }}>
+                  {[
+                    { k: "Required", v: "4 Units" },
+                    { k: "Supplier", v: primary.location_name },
+                    { k: "Deadline", v: "Tomorrow · 2:00 PM" },
+                    { k: "Next Action", v: primary.next_action?.label || "—", color: "#2f6bff" },
+                  ].map((item) => (
+                    <div key={item.k}>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.12em", color: "#4a4940", textTransform: "uppercase", marginBottom: 3 }}>
+                        {item.k}
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: item.color || "#e8e6e1" }}>
+                        {item.v}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.06em" }}>
                   {["DELIVERY_FAILED", "SUPPLIER_CONTACT_REQUIRED", "COMMITMENT_ACCEPTED", "RECOVERY_COMMITTED"].map(
                     (s, i) => {
                       const isCurrent = s === primary.state;
-                      const isPast =
-                        ["DELIVERY_FAILED", "SUPPLIER_CONTACT_REQUIRED", "COMMITMENT_ACCEPTED", "RECOVERY_COMMITTED"].indexOf(primary.state) >
-                        i;
+                      const isPast = ["DELIVERY_FAILED", "SUPPLIER_CONTACT_REQUIRED", "COMMITMENT_ACCEPTED", "RECOVERY_COMMITTED"].indexOf(primary.state) > i;
                       return (
-                        <span key={s} className="flex items-center gap-2">
-                          {i > 0 && <span className="text-mise-faint">→</span>}
-                          <span
-                            className={`px-2 py-1 rounded border ${
-                              isCurrent
-                                ? "border-mise-blue/40 bg-mise-blue/10 text-mise-blue font-bold"
-                                : isPast
-                                ? "border-mise-green/30 bg-mise-green/10 text-mise-green"
-                                : "border-mise-border text-mise-faint"
-                            }`}
-                          >
+                        <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          {i > 0 && <span style={{ color: "#4a4940" }}>→</span>}
+                          <span style={{
+                            padding: "4px 8px", borderRadius: 4, border: "1px solid " + (isCurrent ? "rgba(47,107,255,0.4)" : isPast ? "rgba(22,163,74,0.3)" : "#232328"),
+                            background: isCurrent ? "rgba(47,107,255,0.1)" : isPast ? "rgba(22,163,74,0.1)" : "transparent",
+                            color: isCurrent ? "#2f6bff" : isPast ? "#16a34a" : "#4a4940",
+                            fontWeight: isCurrent ? 800 : 400,
+                          }}>
                             {humanize(s)}
                           </span>
                         </span>
@@ -138,52 +101,45 @@ export default function OverviewPage() {
             </Link>
           )}
 
-          {/* Stats row */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-1 border border-mise-border rounded-xl overflow-hidden mb-8">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, border: "1px solid #232328", borderRadius: 14, overflow: "hidden", marginBottom: 32 }}>
               {[
-                { icon: Zap, label: "Live Cases", value: stats.cases, color: "text-mise-blue" },
-                { icon: Phone, label: "Total Transitions", value: stats.transitions, color: "text-mise-wheat" },
-                { icon: CheckCircle2, label: "Avg Confidence", value: `${Math.round(stats.avg_confidence * 100)}%`, color: "text-mise-green" },
-                { icon: Clock, label: "Tests Passing", value: stats.tests, color: "text-mise-ink" },
-              ].map((stat) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={stat.label} className="bg-mise-surface p-5">
-                    <Icon className={`w-4 h-4 ${stat.color} mb-2`} />
-                    <div className="text-2xl font-display font-bold text-mise-ink">
-                      {stat.value}
-                    </div>
-                    <div className="font-mono text-[9px] tracking-wider text-mise-faint uppercase mt-1">
-                      {stat.label}
-                    </div>
+                { label: "Live Cases", value: stats.cases, color: "#2f6bff" },
+                { label: "Transitions", value: stats.transitions, color: "#c6a96b" },
+                { label: "Avg Confidence", value: Math.round(stats.avg_confidence * 100) + "%", color: "#16a34a" },
+                { label: "Tests Passing", value: stats.tests, color: "#e8e6e1" },
+              ].map((stat) => (
+                <div key={stat.label} style={{ background: "#111114", padding: 24 }}>
+                  <div style={{ fontSize: 32, fontFamily: "'Fraunces', serif", fontWeight: 900, color: stat.color }}>
+                    {stat.value}
                   </div>
-                );
-              })}
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.15em", color: "#4a4940", textTransform: "uppercase", marginTop: 4 }}>
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Quick actions */}
-          <div className="border border-mise-border rounded-xl bg-mise-surface p-6">
-            <h3 className="font-mono text-[10px] tracking-[0.2em] text-mise-muted uppercase mb-4">
+          <div style={{ border: "1px solid #232328", borderRadius: 14, background: "#111114", padding: 24 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "#7c7a72", textTransform: "uppercase", marginBottom: 14 }}>
               Quick Actions
-            </h3>
-            <div className="flex gap-3">
-              <Link href={`/demo/incident?id=${primary?.id}`}>
-                <Button variant="primary" size="sm">
-                  Open Incident Detail
-                  <ArrowRight className="w-3 h-3" />
-                </Button>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <Link href={"/demo/incident?id=" + (primary?.id || "")}>
+                <button style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 10, border: "none", cursor: "pointer", background: "#2f6bff", color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                  Open Incident Detail →
+                </button>
               </Link>
               <Link href="/demo/security-lab">
-                <Button variant="secondary" size="sm">
+                <button style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #232328", background: "transparent", color: "#e8e6e1", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                   Security Lab
-                </Button>
+                </button>
               </Link>
               <Link href="/demo/evidence">
-                <Button variant="ghost" size="sm">
+                <button style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #232328", background: "transparent", color: "#7c7a72", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                   View Evidence
-                </Button>
+                </button>
               </Link>
             </div>
           </div>
