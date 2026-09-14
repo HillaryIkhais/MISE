@@ -70,7 +70,11 @@ body {
 /* ── HERO ── */
 .hero-section {
   min-height: 100vh; display: flex; align-items: center;
-  padding: 80px 48px 48px; position: relative;
+  padding: 80px 48px 48px; position: relative; overflow: hidden;
+}
+.hero-3d {
+  position: absolute; right: -60px; top: 50%; transform: translateY(-50%);
+  width: 600px; height: 600px; opacity: 0.7; pointer-events: none; z-index: 0;
 }
 .hero-glow-1 {
   position: absolute; top: 20%; left: 15%; width: 500px; height: 500px;
@@ -85,7 +89,7 @@ body {
 .hero-inner {
   width: 100%; max-width: 1280px; margin: 0 auto;
   display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
-  align-items: center;
+  align-items: center; position: relative; z-index: 1;
 }
 .hero-eyebrow {
   display: flex; align-items: center; gap: 10px;
@@ -396,6 +400,14 @@ body {
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: none; }
+}
+@keyframes waveform {
+  from { transform: scaleY(0.5); }
+  to { transform: scaleY(1); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 .animate-in { animation: fadeInUp 0.6s ease-out both; }
 .animate-in-delay-1 { animation: fadeInUp 0.6s ease-out 0.1s both; }
