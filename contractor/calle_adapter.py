@@ -18,8 +18,8 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
-POLL_TIMEOUT_S = 120.0
-POLL_INTERVAL_S = 2.0
+POLL_TIMEOUT_S = 45.0
+POLL_INTERVAL_S = 1.5
 
 
 def _load_dotenv():
@@ -104,7 +104,7 @@ def _create_call(cfg: dict, task: str, schema: dict, idem: str) -> dict:
                   headers={"Authorization": f"Bearer {cfg['key']}",
                            "Content-Type": "application/json",
                            "Idempotency-Key": idem})
-    with urlopen(req, timeout=30) as resp:
+    with urlopen(req, timeout=15) as resp:
         return json.loads(resp.read().decode())
 
 
@@ -175,7 +175,7 @@ def call_e_call(goal: str, to: str, **kw) -> dict:
         call_id = created.get("id") or ""
         task = _poll_call(cfg, call_id) if call_id else created
         return _normalize(task, to, goal)
-    except (URLError, HTTPError, OSError) as exc:
+    except (URLError, HTTPError, OSError, RuntimeError, TimeoutError) as exc:
         # A failed live call is safer to flag than to pretend it didn't happen.
         fb = _simulate(goal, to, **kw)
         fb["live_error"] = str(exc)

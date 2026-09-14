@@ -3,7 +3,7 @@
 ### Don't let 'maybe' become 'done.'
 
 A critical supplier delivery fails. **MISE coordinates the phone work required to
-recover** — contacting the supplier, extracting a firm commitment, and only
+recover** — contacting Torque Precision, extracting a firm commitment, and only
 advancing the workflow when the commitment is explicit. **CALL-E makes the
 calls; MISE decides when the work is actually allowed to move.**
 
