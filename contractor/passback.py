@@ -322,6 +322,11 @@ class PassbackStore:
         return [dict(r) for r in self.conn.execute(
             "SELECT * FROM passback_cases ORDER BY opened_at").fetchall()]
 
+    def clear(self):
+        self.conn.execute("DELETE FROM passback_steps")
+        self.conn.execute("DELETE FROM passback_cases")
+        self.conn.commit()
+
     def close(self):
         self.conn.close()
 
@@ -383,7 +388,7 @@ class PassbackCase:
         if action.get("terminal"):
             raise PassbackError("TERMINAL", "no further phone action for this case")
         structured = kw.pop("structured", None) or {}
-        source = kw.pop("source", None)
+        source = kw.pop("source", None) or STEP_ACTOR.get(TRANSITIONS[self.state][1])
 
         transcript = kw.pop("transcript", None)
         live = False
@@ -395,6 +400,8 @@ class PassbackCase:
                 kw["scenario"] = ("requirement"
                                   if self.state == "CLOSED"
                                   else "auto")
+            kw.setdefault("case_id", self.id)
+            kw.setdefault("from_state", self.state)
             result = self.call_fn(action["goal"], action["to"], **kw)
             transcript = result.get("transcript", "")
             structured = structured or result.get("extracted", {})

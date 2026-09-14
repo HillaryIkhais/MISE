@@ -68,7 +68,7 @@ Append-only, hash-linked: the board can be *verified*, not just claimed.
 ```bash
 python3 demo.py --db contractor.db           # the recovery board, called and defended
 python3 server.py --db contractor.db         # dashboard at http://127.0.0.1:8080
-python3 -m unittest discover -s tests        # 69 tests, all green
+python3 -m unittest discover -s tests        # 73 tests, all green
 ```
 
 ---
@@ -79,17 +79,24 @@ The architecture is not "demo simulator → fake result → board." The engine
 calls CALL-E, CALL-E calls a real phone, the real result enters the evidence
 gate.
 
+Live mode activates when all three env vars are present (a tiny stdlib `.env`
+loader reads them automatically at startup):
+
 ```bash
-export CALLE_API_URL=...
-export CALLE_API_KEY=...
-python3 demo.py --real-call --db contractor.db
+# .env — do not commit (gitignored)
+CALLE_BASE_URL=https://api.heycall-e.com
+CALLE_API_KEY=your_live_key
+CALLE_PHONE=+15551234567      # consented E.164 destination
 ```
 
 Without credentials the demo runs the same pipeline on a deterministic
 simulation — same protocol, same gate, same ledger — so judges can evaluate
-the full stack offline. The live path posts to `{CALLE_API_URL}/calls`,
-normalizes the response into `{call_id, transcript, extracted}` and feeds it
-straight into `verify_call`.
+the full stack offline. The live path creates a call task at
+`POST {CALLE_BASE_URL}/v1/calls`, polls until terminal, and normalizes the
+result (`transcript`, `structured_result`, `completion_confidence`) into the
+case-ready contract that feeds `verify_call`. If the real call fails or times
+out, the adapter falls back to deterministic simulation with an explicit
+`live_error` flag — the demo continues, but the error is never silent.
 
 The **designated live transition** is `BLOCKER IDENTIFIED → REMEDIATION
 BOOKED`: one genuinely live, load-bearing call to the remediation provider.

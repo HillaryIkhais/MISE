@@ -52,8 +52,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", default=":memory:")
     ap.add_argument("--real-call", action="store_true",
-                    help="use live CALL-E (needs CALLE_API_URL + CALLE_API_KEY; "
-                         "falls back to deterministic simulation)")
+                     help="use live CALL-E (needs CALLE_API_URL + CALLE_API_KEY; "
+                          "falls back to deterministic simulation)")
+    ap.add_argument("--seed-only", action="store_true",
+                     help="seed the DB at CLOSED without advancing; used by the server demo UI")
     args = ap.parse_args()
     live = args.real_call
 
@@ -88,6 +90,15 @@ def main():
     # ------ MOVE 1 — health department
     banner("MOVE 1 — ENGINE → CALL-E → HEALTH DEPARTMENT")
     case = pb.PassbackCase(ps, "loc_004", "Harbor Kitchen #04", call_fn=call_fn)
+    if args.seed_only:
+        ps.clear()
+        case = pb.PassbackCase(ps, "loc_004", "Harbor Kitchen #04", call_fn=call_fn)
+        banner("SEEDED")
+        print(f"  DB: {args.db}")
+        print("  Case: Harbor Kitchen #04 — CLOSED")
+        print("  Board is at step 1/5. Start the server and run the calls interactively.")
+        print()
+        return
     action = case.next_action()
     print(f"  MISE next action: {action['label']}")
     print(f"  goal: {action['goal']}")
