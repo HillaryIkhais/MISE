@@ -179,17 +179,26 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", default="contractor.db")
-    ap.add_argument("--port", type=int, default=8080)
+    ap.add_argument("--port", type=int, default=None)
     args = ap.parse_args()
     Handler.db_path = args.db
+    import os as _os
+    port = args.port or int(_os.environ.get("PORT", 8080))
     from contractor.calle_adapter import calle_env
     cfg = calle_env()
     Handler.live_calle = bool(cfg["url"] and cfg["key"] and cfg["phone"])
     from contractor import Store
     s1 = Store(args.db); s1.conn.close()
     s2 = PassbackStore(args.db); s2.close()
-    srv = HTTPServer(("127.0.0.1", args.port), Handler)
-    print(f"MISE dashboard: http://127.0.0.1:{args.port}  (db={args.db})")
+    # Auto-seed on first run (no cases yet)
+    from contractor.passback import PassbackCase
+    ps = PassbackStore(args.db)
+    if not [c for c in ps.list_cases() if not c["location_id"].startswith("probe_")]:
+        PassbackCase(ps, "loc_004", "Harbor Kitchen #04")
+        print("  Seeded Harbor Kitchen #04 at CLOSED")
+    ps.close()
+    srv = HTTPServer(("0.0.0.0", port), Handler)
+    print(f"MISE dashboard: http://0.0.0.0:{port}  (db={args.db})")
     srv.serve_forever()
 
 
