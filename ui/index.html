@@ -3,590 +3,1150 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MISE — Restaurant Recovery with Voice AI</title>
+<title>MISE — Restaurant Recovery, with Voice AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* ══════════════════════════════════════════════════════════════
-   MISE — the recovery board
-   Restaurant fails inspection → closes → MISE coordinates the phone
-   work toward reopening. No evidence, no state transition.
-   ══════════════════════════════════════════════════════════════ */
-*{margin:0;padding:0;box-sizing:border-box}
+/* ═══════════════════════════════════════════════════════════════
+   MISE — product UI
+   Editorial × industrial. Landing + Demo workspace + Protocol.
+   Canvas-3D articulated arm with anchored HUD telemetry.
+   ═══════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#16181a;--card:#f4f3ef;--card2:#e8e7e3;
-  --accent:#2563eb;--green:#16a34a;--red:#dc2626;--amber:#d97706;
-  --text:#1a1a1a;--muted:#8a8780;--tan:#c8b8a8;--line:#deddd7;
-  --frame-r:28px;
+  --frame:#0f1113;
+  --paper:#f4f2ec;
+  --card:#fbfaf6;
+  --ink:#1a1917;
+  --muted:#7c776c;
+  --faint:#a49f94;
+  --line:#e2ded3;
+  --blue:#2f6bff;
+  --green:#167a3d;
+  --red:#b3261e;
+  --wheat:#c6a96b;
+  --serif:'Fraunces',serif;
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
 }
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px;display:flex;justify-content:center}
-body::before{content:'';position:fixed;inset:0;background:
-  radial-gradient(1000px 500px at 70% -10%,rgba(37,99,235,.06),transparent 60%),
-  radial-gradient(800px 400px at 10% 110%,rgba(200,184,168,.10),transparent 60%);pointer-events:none;z-index:0}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--frame);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
-.frame{width:100%;max-width:1320px;background:linear-gradient(180deg,#1d1f22,#121416);border-radius:var(--frame-r);padding:10px;position:relative;z-index:1;box-shadow:0 30px 80px rgba(0,0,0,.5)}
-.panel{background:var(--card);border-radius:20px;overflow:hidden;position:relative;min-height:86vh}
-.panel::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--accent),var(--amber));opacity:.9}
+/* ────────────────────────── FRAME ────────────────────────── */
+.frame{max-width:1440px;margin:16px auto;background:var(--frame);border-radius:26px;padding:10px;box-shadow:0 40px 120px rgba(0,0,0,.55);position:relative}
+.panel{background:var(--paper);border-radius:18px;overflow:hidden;position:relative;min-height:calc(100vh - 52px)}
+.panel::before{content:'';position:absolute;inset:0 0 auto;height:3px;z-index:60;
+  background:linear-gradient(90deg,var(--wheat) 0%,transparent 18%,var(--blue) 55%,var(--green) 100%);opacity:.85}
 
-/* ── NAV ── */
-nav{display:flex;align-items:center;justify-content:space-between;padding:20px 36px;position:relative;z-index:20}
-.nav-pill{font-size:9px;font-weight:700;letter-spacing:2px;color:#999;border:1px solid #d0d0c8;border-radius:20px;padding:6px 16px;text-transform:uppercase;background:rgba(255,255,255,.6)}
-.nav-brand{font-size:15px;font-weight:900;letter-spacing:5px}
-.nav-brand b{color:var(--accent)}
-.nav-menu{display:flex;flex-direction:column;gap:5px;cursor:pointer;padding:6px}
-.nav-menu i{display:block;width:24px;height:2px;background:var(--text);border-radius:1px}
+/* ────────────────────────── NAV ────────────────────────── */
+nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 36px;background:rgba(244,242,236,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.14em;font-size:15px}
+.brand .sig{width:9px;height:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(47,107,255,.15)}
+.brand em{font-style:normal;color:var(--muted)}
+.nav-links{display:flex;gap:30px;font-size:12.5px;font-weight:600;color:#3c3a35}
+.nav-links a{position:relative;padding:6px 2px;opacity:.75;transition:opacity .2s}
+.nav-links a:hover{opacity:1}
+.nav-links a.active{opacity:1}
+.nav-links a.active::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--blue);border-radius:1px}
+.nav-cta{display:flex;align-items:center;gap:16px}
+.btn{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:700;letter-spacing:.04em;
+  padding:11px 22px;border-radius:999px;transition:transform .25s var(--ease),box-shadow .25s,background .25s}
+.btn.solid{background:var(--ink);color:#fff}
+.btn.solid:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,.25)}
+.btn.ghost{border:1.5px solid var(--line);background:transparent}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.blue:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(47,107,255,.35)}
+.btn.small{padding:8px 16px;font-size:11px}
 
-/* ── HERO ── */
-.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:8px 24px;padding:6px 40px 0;position:relative;z-index:10}
-.hero-left h1{font-size:clamp(38px,4.6vw,62px);font-weight:900;line-height:1.02;letter-spacing:-2.5px}
-.hero-left h1 .soft{font-weight:300;color:var(--muted)}
-.hero-left .pipe{display:flex;align-items:center;gap:8px;margin:16px 0 4px;flex-wrap:wrap}
-.hero-left .pipe span{font-size:10px;font-weight:700;letter-spacing:1.5px;color:#fff;background:var(--text);padding:6px 12px;border-radius:16px;text-transform:uppercase}
-.hero-left .pipe i{color:#bbb;font-style:normal;font-size:12px}
-.hero-left .pipe span.done{background:var(--green)}
-.hero-left .pipe span.now{background:var(--accent)}
-.hero-left .pipe span.judge{background:var(--tan);color:var(--text)}
-.hero-right{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding-top:6px}
-.hero-right .dash{font-size:22px;font-weight:300;color:var(--muted);line-height:1.25}
-.hero-right .dash b{color:var(--text);font-weight:700}
-.book-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:24px;padding:12px 26px;font-size:11px;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:transform .2s,box-shadow .2s;text-transform:uppercase}
-.book-btn:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(37,99,235,.4)}
-.book-btn::after{content:'→';font-size:15px;transition:transform .2s}
-.book-btn:hover::after{transform:translateX(3px)}
-.hero-right .seed{font-size:10px;color:#b9b6ae;letter-spacing:.5px}
+/* ────────────────────────── VIEWS ────────────────────────── */
+.view{display:none}
+.view.active{display:block;animation:view-in .5s var(--ease)}
+@keyframes view-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.wrap{padding:0 56px;max-width:1240px;margin:0 auto}
 
-/* ── CASE CARD ── */
-.case-card{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;margin:18px 40px 0;overflow:hidden;position:relative;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,.05)}
-.cc{background:var(--card2);padding:14px 16px;position:relative}
-.cc-label{font-size:8px;font-weight:800;letter-spacing:1.5px;color:#a39f96;text-transform:uppercase;margin-bottom:5px}
-.cc-val{font-size:13px;font-weight:700;line-height:1.35}
-.cc-val.mono{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
-.cc-val.small{font-size:11px;font-weight:500;color:#555}
-.cc b.status{border-radius:14px;padding:8px 14px;font-size:11px;letter-spacing:1.5px;display:inline-block}
-.cc b.status.closed{background:var(--red);color:#fff}
-.cc b.status.path{background:var(--green);color:#fff}
-.cc b.status.active{background:var(--accent);color:#fff}
+/* ────────────────────────── HERO ────────────────────────── */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:8px;align-items:center;
+  padding:64px 0 40px;position:relative}
+.eyebrow{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:26px}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(22,122,61,.4);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,122,61,.40)}70%{box-shadow:0 0 0 9px rgba(22,122,61,0)}100%{box-shadow:0 0 0 0 rgba(22,122,61,0)}}
+.hero h1{font-family:var(--serif);font-weight:600;font-size:clamp(44px,5.4vw,78px);line-height:1.02;letter-spacing:-.02em}
+.hero h1 .soft{color:var(--muted);font-weight:300}
+.hero h1 .hl{color:var(--blue)}
+.hero-sub{margin:22px 0 8px;font-size:16.5px;line-height:1.65;color:#4a4841;max-width:480px}
+.hero-sub .k{font-weight:600;color:var(--ink)}
+.hero-cta{display:flex;gap:14px;margin-top:30px;align-items:center;flex-wrap:wrap}
+.proof-row{display:flex;gap:26px;margin-top:38px;flex-wrap:wrap}
+.proof{display:flex;align-items:baseline;gap:8px}
+.proof .n{font-family:var(--serif);font-weight:900;font-size:30px;letter-spacing:-.02em}
+.proof .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 
-/* ── 3D SCENE ── */
-.scene{perspective:1300px;height:330px;position:relative;margin:14px 40px 4px;z-index:5}
-.scene-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .08s ease-out;transform-origin:center 60%}
-.floor{position:absolute;bottom:16px;left:50%;transform:translateX(-50%) rotateX(70deg);width:340px;height:70px;background:radial-gradient(ellipse,rgba(0,0,0,.14) 0%,transparent 70%);border-radius:50%}
+.scene-wrap{position:relative;height:520px}
+#stage{width:100%;height:100%;display:block}
+/* anchored HUD callouts — positioned in px by the renderer */
+.hud{position:absolute;display:none;pointer-events:none}
+.hud .box{background:rgba(251,250,246,.92);border:1px solid var(--line);border-radius:10px;
+  padding:9px 12px;box-shadow:0 14px 34px rgba(0,0,0,.10);backdrop-filter:blur(6px);transform:translate(-50%,-115%)}
+.hud .tail{position:absolute;left:50%;top:-1px;width:1.5px;height:26px;background:var(--line);transform:translateX(-50%)}
+.hud .tail::before{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:7px;height:7px;border-radius:50%;background:var(--wheat)}
+.hud .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+.hud .v{font-size:12.5px;font-weight:700;margin-top:2px;white-space:nowrap}
+.hud .v.live{color:var(--green)}
+.hud .v.mono{font-family:var(--mono);font-size:11px}
 
-.arm{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);width:200px;height:280px;transform-style:preserve-3d}
-.arm-base{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120px;height:38px;background:linear-gradient(180deg,#e4e3df,#c4c3bf);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.6)}
-.arm-base::after{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:4px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.06),transparent);border-radius:2px}
-.arm-pedestal{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:linear-gradient(180deg,#d9d8d4,#bcbcb8);border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 6px rgba(0,0,0,.08)}
-.joint{position:absolute;border-radius:50%;transform-style:preserve-3d}
-.joint::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.8),rgba(200,200,196,.4))}
-.joint-shoulder{bottom:80px;left:50%;transform:translateX(-50%);width:32px;height:32px;background:linear-gradient(135deg,#d0cfcb,#a8a8a4);box-shadow:0 2px 6px rgba(0,0,0,.1);z-index:3;animation:shoulder-sway 5s ease-in-out infinite alternate}
-.joint-shoulder::after{width:14px;height:14px}
-.arm-upper{position:absolute;bottom:96px;left:50%;transform-origin:bottom center;width:16px;height:90px;background:linear-gradient(180deg,#e6e5e1,#ccc);border-radius:8px;box-shadow:2px 0 8px rgba(0,0,0,.06);animation:upper-sway 5s ease-in-out infinite alternate;z-index:2}
-.arm-upper::before{content:'';position:absolute;top:20px;left:50%;transform:translateX(-50%);width:6px;height:100%;background:linear-gradient(180deg,rgba(0,0,0,.04),transparent);border-radius:3px}
-.joint-elbow{bottom:180px;left:calc(50% + 8px);transform:translateX(-50%);width:26px;height:26px;background:linear-gradient(135deg,#d8d7d3,#b0b0ac);box-shadow:0 2px 5px rgba(0,0,0,.08);z-index:3;animation:elbow-sway 5s ease-in-out infinite alternate .3s}
-.joint-elbow::after{width:12px;height:12px}
-.arm-lower{position:absolute;bottom:192px;left:calc(50% + 8px);transform-origin:bottom center;width:14px;height:80px;background:linear-gradient(180deg,#dfdfdb,#bcbcb8);border-radius:7px;box-shadow:2px 0 6px rgba(0,0,0,.05);animation:lower-sway 5s ease-in-out infinite alternate .3s;z-index:2}
-.joint-wrist{bottom:266px;left:calc(50% + 8px);transform:translateX(-50%);width:20px;height:20px;background:linear-gradient(135deg,#c8c7c3,#a0a09c);box-shadow:0 1px 4px rgba(0,0,0,.08);z-index:3;animation:wrist-sway 5s ease-in-out infinite alternate .15s}
-.joint-wrist::after{width:9px;height:9px}
-.arm-head{position:absolute;bottom:274px;left:calc(50% + 8px);transform:translateX(-50%);width:46px;height:38px;background:linear-gradient(180deg,#eae9e5,#d0cfcb);border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);animation:head-sway 5s ease-in-out infinite alternate .15s;z-index:4}
-.arm-head::before{content:'';position:absolute;top:10px;right:8px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#6ec6ff,var(--accent));box-shadow:0 0 8px rgba(37,99,235,.35)}
-.arm-head::after{content:'';position:absolute;top:14px;left:8px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#4ade80,var(--green));box-shadow:0 0 6px rgba(22,163,74,.35)}
-.phone{position:absolute;bottom:314px;left:calc(50% - 8px);width:22px;height:40px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:5;animation:head-sway 5s ease-in-out infinite alternate .15s}
-.phone::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:12px;height:18px;background:linear-gradient(180deg,#3b82f6,#1d4ed8);border-radius:3px;box-shadow:0 0 6px rgba(37,99,235,.4)}
-.phone::after{content:'';position:absolute;top:3px;left:50%;transform:translateX(-50%);width:4px;height:2px;background:rgba(255,255,255,.6);border-radius:1px}
-.ring{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:white;z-index:6;animation:ring-pulse 1.5s ease-out infinite}
-.ring::before,.ring::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid rgba(255,255,255,.4);animation:ring-expand 1.5s ease-out infinite}
-.ring::before{width:20px;height:20px}
-.ring::after{width:36px;height:36px;animation-delay:.3s}
+/* ────────────────────────── MARQUEE ────────────────────────── */
+.marquee{border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;padding:18px 0;background:var(--card)}
+.marquee-track{display:flex;gap:0;width:max-content;animation:scrollx 32s linear infinite}
+.marquee-track span{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#8b8578;
+  text-transform:uppercase;padding:0 32px;white-space:nowrap}
+.marquee-track span b{color:var(--ink);font-weight:700}
+@keyframes scrollx{to{transform:translateX(-50%)}}
 
-@keyframes shoulder-sway{0%{transform:translateX(-50%) rotate(0deg)}100%{transform:translateX(-50%) rotate(3deg)}}
-@keyframes upper-sway{0%{transform:rotate(0deg)}100%{transform:rotate(-3deg)}}
-@keyframes elbow-sway{0%{transform:translateX(-50%) rotate(0deg)}100%{transform:translateX(-50%) rotate(4deg)}}
-@keyframes lower-sway{0%{transform:rotate(0deg)}100%{transform:rotate(-4deg)}}
-@keyframes wrist-sway{0%{transform:translateX(-50%) rotate(0deg)}100%{transform:translateX(-50%) rotate(2deg)}}
-@keyframes head-sway{0%{transform:translateX(-50%) rotate(0deg) translateY(0)}100%{transform:translateX(-50%) rotate(-1.5deg) translateY(-2px)}}
-@keyframes ring-pulse{0%{opacity:1}100%{opacity:0}}
-@keyframes ring-expand{0%{transform:translate(-50%,-50%) scale(.5);opacity:.8}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
+/* ────────────────────────── SECTIONS ────────────────────────── */
+.section{padding:88px 0 20px;position:relative}
+.section-head{max-width:640px;margin-bottom:46px}
+.section-head .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--blue);margin-bottom:14px}
+.section-head h2{font-family:var(--serif);font-weight:600;font-size:clamp(32px,3.6vw,50px);line-height:1.05;letter-spacing:-.015em}
+.section-head p{margin-top:14px;color:#4a4841;line-height:1.7;font-size:15.5px}
+.section-head .rule{width:44px;height:3px;background:var(--wheat);border-radius:2px;margin-top:18px}
 
-.callout{position:absolute;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:10px;z-index:10;box-shadow:0 6px 20px rgba(0,0,0,.08);animation:float-bob 5s ease-in-out infinite}
-@keyframes float-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-.callout-left{top:14px;left:18px}
-.callout-left .cl-status{font-weight:800;color:var(--text);font-size:12px;letter-spacing:.5px}
-.callout-left .cl-mode{color:var(--muted);font-size:9px;letter-spacing:1.5px;margin-top:2px}
-.callout-left .cl-line{width:40px;height:1px;background:#d0d0c8;margin:8px 0}
-.callout-left .cl-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);font-weight:600}
-.callout-right{bottom:94px;right:20px;min-width:236px;animation-delay:1.2s;border-color:var(--tan);background:rgba(200,184,168,.16)}
-.callout-right::before{content:'';position:absolute;top:-1px;left:-1px;width:18px;height:18px;border-top:2px solid var(--tan);border-left:2px solid var(--tan);border-radius:5px 0 0 0}
-.callout-right::after{content:'';position:absolute;bottom:-1px;right:-1px;width:18px;height:18px;border-bottom:2px solid var(--tan);border-right:2px solid var(--tan);border-radius:0 0 5px 0}
-.cr-title{font-weight:800;color:var(--text);font-size:10px;letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase}
-.cr-line{font-family:'JetBrains Mono',monospace;font-size:9px;color:#6a675f;line-height:2;white-space:nowrap}
-.cr-line b{color:var(--text);font-weight:700}
-.cr-line .ok{color:var(--green);font-weight:700}
-.cr-line .block{color:var(--red);font-weight:700}
+/* THE BOARD path */
+.path{display:grid;grid-template-columns:repeat(5,1fr);gap:0;position:relative;margin-top:10px}
+.path .node{position:relative;padding:22px 18px;border-top:2px solid var(--line)}
+.path .node .n{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.14em}
+.path .node .t{font-size:13.5px;font-weight:700;margin-top:10px;line-height:1.3}
+.path .node .d{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+.path .node::before{content:'';position:absolute;top:-6px;left:18px;width:10px;height:10px;border-radius:50%;background:var(--paper);border:2px solid var(--line)}
+.path .node.done{border-top-color:var(--green)}
+.path .node.done::before{background:var(--green);border-color:var(--green)}
+.path .node.done .t{color:var(--green)}
+.path .node.now{border-top-color:var(--blue)}
+.path .node.now::before{background:var(--blue);border-color:var(--blue);box-shadow:0 0 0 5px rgba(47,107,255,.14)}
+.path .node.now .t{color:var(--blue)}
+.path .node .ev{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--green);margin-top:10px;display:inline-block;border:1px solid rgba(22,122,61,.3);padding:3px 7px;border-radius:4px}
+.path .node.future .ev{border-color:var(--line);color:var(--faint)}
+.arrowflow{margin:34px 0 6px;display:flex;align-items:center;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);gap:10px;flex-wrap:wrap}
+.arrowflow b{color:var(--ink)}
+.arrowflow .sep{color:var(--faint)}
 
-/* ── BOARD ── */
-.board-section{padding:10px 40px 0;position:relative;z-index:10}
-.board{display:grid;grid-template-columns:repeat(5,1fr);background:var(--line);gap:1px;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.05)}
-.cell{background:var(--card);padding:16px 14px;cursor:pointer;transition:all .25s;position:relative;opacity:0;transform:translateY(20px) rotateX(8deg)}
-.cell.show{opacity:1;transform:translateY(0) rotateX(0deg)}
+/* two layers */
+.layers{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.layer{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:34px;position:relative;overflow:hidden;transition:transform .3s var(--ease),box-shadow .3s}
+.layer:hover{transform:translateY(-4px);box-shadow:0 22px 44px rgba(0,0,0,.08)}
+.layer .tag{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--blue)}
+.layer .tag.wheat{color:var(--wheat)}
+.layer h3{font-family:var(--serif);font-weight:600;font-size:26px;margin:12px 0 10px}
+.layer p{color:#4a4841;font-size:14px;line-height:1.7}
+.layer pre{background:#15161a;color:#dfe3e8;font-family:var(--mono);font-size:10.5px;line-height:1.9;
+  border-radius:10px;padding:16px 18px;margin-top:20px;overflow-x:auto}
+.layer pre .g{color:#7ee2a8}.layer pre .b{color:#7aa2ff}.layer pre .y{color:#e3c37a}.layer pre .r{color:#ff9a8b}
+.layer pre .m{color:#8b8794}
+
+/* invariant / decision */
+.inv{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:40px;margin-top:8px}
+.inv .thesis{font-family:var(--serif);font-size:clamp(26px,3vw,40px);font-weight:400;line-height:1.25;max-width:760px}
+.inv .thesis b{font-weight:900}
+.dec{display:grid;grid-template-columns:1.5fr 1fr;gap:34px;margin-top:34px;align-items:stretch}
+.dec .side{display:flex;flex-direction:column;justify-content:center;gap:8px}
+.dec .line{border-radius:12px;padding:16px 20px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff;position:relative}
+.dec .line .cs{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:5px}
+.dec .line.re{background:#fbf2f0;border-color:#eecfca}
+.dec .line.ok{background:#eef7f0;border-color:#cbe6d3}
+.dec .badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;font-weight:700;border-radius:999px;padding:6px 13px}
+.dec .badge.re{background:var(--red);color:#fff}
+.dec .badge.ok{background:var(--green);color:#fff}
+.dec .verdict{display:flex;flex-direction:column;justify-content:center;gap:16px}
+.dec .vl{display:flex;align-items:center;gap:16px;padding:20px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.dec .vl .arrow{font-family:var(--serif);font-size:26px;color:var(--faint)}
+.dec .vl .state{font-weight:700;font-size:13px}
+.dec .vl .rule{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em}
+
+/* attack lab */
+.attacks{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.atk{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;position:relative;transition:transform .3s var(--ease)}
+.atk:hover{transform:translateY(-4px)}
+.atk .badge{position:absolute;top:16px;right:16px;font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.08em;padding:4px 9px;border-radius:5px}
+.atk .badge.re{background:var(--red);color:#fff}
+.atk .badge.ok{background:var(--green);color:#fff}
+.atk .q{font-family:var(--serif);font-style:italic;font-size:16px;line-height:1.45;color:#3c3a35;margin:20px 0 12px;min-height:72px}
+.atk .code{font-family:var(--mono);font-size:10px;color:var(--ink);background:#eff0ea;border-radius:6px;padding:5px 9px;display:inline-block}
+.atk .desc{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.55}
+.atk .verdict{font-family:var(--mono);font-size:10px;font-weight:700;margin-bottom:8px}
+.atk.re .verdict{color:var(--red)}.atk.ok .verdict{color:var(--green)}
+
+/* stats band */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:6px}
+.stat{background:var(--card);padding:34px 26px;text-align:center}
+.stat .n{font-family:var(--serif);font-weight:900;font-size:44px;letter-spacing:-.03em}
+.stat .l{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;margin-top:8px}
+
+/* CTA band */
+.cta{background:var(--ink);border-radius:18px;padding:64px 52px;color:#fff;text-align:center;position:relative;overflow:hidden}
+.cta::before{content:'';position:absolute;right:-120px;top:-120px;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgba(47,107,255,.35),transparent 70%)}
+.cta h2{font-family:var(--serif);font-weight:600;font-size:clamp(30px,3.4vw,46px);margin-bottom:16px;position:relative}
+.cta p{color:#c9c4b8;font-size:15px;position:relative}
+.cta .btn{margin-top:30px;position:relative}
+.cta .mono-line{font-family:var(--mono);font-size:10px;color:#8b8677;margin-top:22px;position:relative;letter-spacing:.1em}
+
+/* ────────────────────────── DEMO VIEW ────────────────────────── */
+.demo-top{display:flex;align-items:center;justify-content:space-between;padding:18px 36px;border-bottom:1px solid var(--line);background:var(--card)}
+.demo-top .crumbs{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.demo-top .crumbs b{color:var(--ink)}
+.demo-top .right{display:flex;align-items:center;gap:16px}
+.pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;font-weight:600;
+  border:1px solid var(--line);border-radius:999px;padding:7px 14px;color:#5a564c}
+.pill .dot{width:7px;height:7px;border-radius:50%}
+.pill.live .dot{background:var(--green);animation:pulse 2s infinite}
+.pill.live{border-color:rgba(22,122,61,.4);color:var(--green)}
+.demo-grid{display:grid;grid-template-columns:320px 1fr;gap:0;padding:26px 36px 40px;align-items:start}
+.case-panel{position:sticky;top:84px;display:flex;flex-direction:column;gap:16px;padding-right:26px}
+.cp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.cp .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.cp .big{font-family:var(--serif);font-weight:900;font-size:22px}
+.cp .state{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.05em;
+  padding:8px 14px;border-radius:999px;margin-top:6px}
+.cp .state.closed{background:var(--red);color:#fff}
+.cp .state.mid{background:var(--blue);color:#fff}
+.cp .state.done{background:var(--green);color:#fff}
+.cp .why{font-size:12.5px;line-height:1.6;color:#4a4841}
+.cp .why b{color:var(--ink)}
+.cp .next{background:#15161a;border-radius:12px;padding:16px;color:#fff}
+.cp .next .k{color:#8b8e93}
+.cp .next .act{font-size:15px;font-weight:700;margin-top:2px;line-height:1.35}
+.cp .next .to{font-family:var(--mono);font-size:10.5px;color:#7aa2ff;margin-top:8px}
+.cp .live-tag{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  color:var(--green);border:1px solid rgba(22,122,61,.35);padding:4px 9px;border-radius:5px;margin-top:10px;text-transform:uppercase}
+.cp .live-tag.off{color:var(--faint);border-color:var(--line)}
+.cp .live-tag.off .dot{background:var(--faint)}
+
+.pipeline{display:flex;align-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+  color:var(--muted);gap:0;margin-bottom:22px;flex-wrap:wrap;text-transform:uppercase}
+.pipeline span{padding:6px 11px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.pipeline i{font-style:normal;padding:0 7px;color:var(--faint)}
+.pipeline span.hot{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;margin-bottom:26px}
+.cell{background:var(--card);padding:18px 16px;cursor:pointer;transition:background .2s,transform .2s var(--ease);position:relative}
 .cell:hover{background:#fff}
-.cell.done{background:rgba(22,163,74,.05)}
-.cell.now{background:rgba(37,99,235,.06)}
-.cell.terminal.final{background:linear-gradient(135deg,rgba(22,163,74,.10),var(--card))}
-.cell-top{display:flex;align-items:center;gap:7px;margin-bottom:6px}
-.cell-dot{width:9px;height:9px;border-radius:50%;border:2px solid #cfccc4;background:transparent;transition:all .3s}
-.cell.done .cell-dot{border-color:var(--green);background:var(--green)}
-.cell.now .cell-dot{border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
-.cell-num{font-size:8px;font-weight:800;color:#c5c2b9;letter-spacing:1px;font-family:'JetBrains Mono',monospace}
-.cell.done .cell-num{color:var(--green)}
-.cell.now .cell-num{color:var(--accent)}
-.cell-label{font-size:11px;font-weight:800;line-height:1.3}
-.cell-label small{display:block;font-weight:700;color:var(--muted);font-size:10px;margin-top:2px}
-.cell.done .cell-label{color:var(--green)}
-.cell.now .cell-label{color:var(--accent)}
-.cell-sub{font-size:9px;color:#b0aca2;margin-top:6px;line-height:1.4}
-.cell.done .cell-sub{color:var(--green);opacity:.7}
-.cell.now .cell-sub{color:var(--accent);opacity:.8}
-.cell .proof-tag{position:absolute;top:12px;right:10px;font-size:7px;font-weight:800;letter-spacing:1px;background:rgba(22,163,74,.12);color:var(--green);border-radius:8px;padding:2px 6px}
-.cell.future .proof-tag{background:rgba(0,0,0,.05);color:#b0aca2}
+.cell .cnum{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.1em}
+.cell .ct{font-size:12.5px;font-weight:700;margin-top:9px;line-height:1.3}
+.cell .cs{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+.cell .ctag{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:8px;letter-spacing:.1em;
+  padding:3px 7px;border-radius:4px;text-transform:uppercase}
+.cell.done{background:#f0f7f1}
+.cell.done .ct{color:var(--green)}
+.cell.done .ctag{background:rgba(22,122,61,.14);color:var(--green)}
+.cell.now{background:#eef3ff}
+.cell.now .ct{color:var(--blue)}
+.cell.now .ctag{background:rgba(47,107,255,.14);color:var(--blue)}
+.cell.done .cidx{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-family:var(--mono);font-size:9px;margin-bottom:10px}
+.cell.now .cidx{background:var(--blue)}
+.cell .cidx{width:22px;height:22px;border-radius:50%;background:#ecebe4;color:var(--muted);display:grid;place-items:center;font-family:var(--mono);font-size:9px;margin-bottom:10px}
+.done-arrow{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:.06em}
 
-/* ── ATTACK LAB ── */
-.attack-head{font-size:9px;font-weight:800;letter-spacing:2px;color:#a39f96;text-transform:uppercase;margin:22px 40px 10px;display:flex;align-items:center;gap:10px}
-.attack-head::before,.attack-head::after{content:'';flex:1;height:1px;background:var(--line)}
-.attacks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:0 40px;position:relative;z-index:10}
-.attack{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 15px;box-shadow:0 3px 10px rgba(0,0,0,.04);opacity:0;transform:translateY(16px);transition:all .5s}
-.attack.show{opacity:1;transform:translateY(0)}
-.attack .at-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.attack .at-tag{font-size:7px;font-weight:800;letter-spacing:1.5px;padding:3px 8px;border-radius:10px;text-transform:uppercase}
-.attack.block .at-tag{background:rgba(220,38,38,.1);color:var(--red)}
-.attack.ok .at-tag{background:rgba(22,163,74,.12);color:var(--green)}
-.attack .at-attack{font-size:11px;font-style:italic;color:var(--muted);min-height:30px;line-height:1.4}
-.attack .at-verdict{font-size:11px;font-weight:800;letter-spacing:.5px;margin:8px 0 4px}
-.attack.block .at-verdict{color:var(--red)}
-.attack.ok .at-verdict{color:var(--green)}
-.attack .at-code{font-family:'JetBrains Mono',monospace;font-size:9px;background:#f4f3ef;border-radius:4px;padding:2px 6px;display:inline-block;color:#555}
-.attack .at-desc{font-size:9px;color:#a6a29a;margin-top:7px;line-height:1.5}
+.demo-cols{display:grid;grid-template-columns:1.5fr 1fr;gap:22px}
+.log{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.log .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.log .head h3{font-size:12px;font-weight:800;letter-spacing:.05em}
+.log .head .count{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.log .entry{display:grid;grid-template-columns:70px 1fr auto;gap:12px;padding:13px 0;border-bottom:1px dashed var(--line);align-items:start}
+.log .entry:last-child{border:none}
+.log .entry .time{font-family:var(--mono);font-size:10px;color:var(--faint);padding-top:2px}
+.log .entry .who{font-size:11px;font-weight:700}
+.log .entry .st{font-size:11px;color:#4a4841;line-height:1.5;margin-top:3px}
+.log .entry .verdict{font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 8px;border-radius:5px;text-transform:uppercase}
+.log .entry .verdict.ok{background:rgba(22,122,61,.12);color:var(--green)}
+.log .entry .verdict.re{background:rgba(179,38,30,.1);color:var(--red)}
+.mini-attacks{display:flex;flex-direction:column;gap:12px}
+.ma{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:14px 1fr;gap:12px;align-items:start}
+.ma .ic{font-family:var(--mono);font-weight:700;font-size:12px;padding-top:1px}
+.ma.re .ic{color:var(--red)}.ma.ok .ic{color:var(--green)}
+.ma .q{font-family:var(--serif);font-style:italic;font-size:13px;color:#3c3a35;line-height:1.4}
+.ma .meta{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:5px;letter-spacing:.06em}
+.ma.re .meta b{color:var(--red)}.ma.ok .meta b{color:var(--green)}
+.advance-wrap{margin-bottom:26px;display:flex;align-items:center;gap:16px}
+.advance-wrap .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.advance-wrap .hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.05em}
 
-/* ── FOOTER ── */
-.footer{padding:22px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:relative;z-index:10;margin-top:18px}
-.footer-left{font-size:12px;font-weight:600}.footer-left em{font-style:normal;color:var(--muted)}
-.footer-trust{display:flex;flex-direction:column;align-items:center;gap:6px}
-.footer-trust-label{font-size:8px;font-weight:700;letter-spacing:2px;color:#b5b1a8;text-transform:uppercase}
-.footer-logos{display:flex;gap:22px;align-items:center}
-.footer-logos span{font-size:10px;font-weight:800;color:#aaa;letter-spacing:.5px;opacity:.65}
-.footer-logos span.b{opacity:1;color:#8a867e;font-weight:900}
-.footer-right{font-size:9px;color:#b5b1a8;letter-spacing:1px;display:flex;align-items:center;gap:6px}
-.dot-live{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+/* ────────────────────────── PROTOCOL VIEW ────────────────────────── */
+.protocol-hero{padding:64px 0 20px}
+.protocol-hero h1{font-family:var(--serif);font-weight:600;font-size:clamp(38px,4.6vw,64px);line-height:1.04;max-width:800px}
+.protocol-hero p{margin-top:18px;font-size:16px;color:#4a4841;max-width:560px;line-height:1.7}
+.code-card{background:#141519;border:1px solid #232429;border-radius:16px;padding:34px;margin-top:44px;font-family:var(--mono);font-size:12.5px;line-height:2;color:#dfe3e8;overflow-x:auto}
+.code-card .c{color:#8b8794}
+.code-card .k{color:#7aa2ff}
+.code-card .s{color:#e3c37a}
+.code-card .g{color:#7ee2a8}
+.code-card .r{color:#ff9a8b}
+.code-card .note{font-size:10.5px;color:#6d7078;letter-spacing:.05em}
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:36px}
+.reason-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:14px 4px;border-bottom:1px dashed var(--line);font-size:13px}
+.reason-row .code{font-family:var(--mono);font-weight:700;color:var(--red);white-space:nowrap}
+.reason-row .why{color:var(--muted);text-align:right;font-size:12px}
+.reason-row .why .greek{font-style:italic;font-family:var(--serif);color:#3c3a35}
 
-/* ── EVIDENCE DRAWER ── */
-.drawer{position:fixed;inset:auto 0 0 0;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -6px 40px rgba(0,0,0,.18);padding:0 40px 34px;transform:translateY(105%);transition:transform .45s cubic-bezier(.4,0,.2,1);z-index:100;max-height:82vh;overflow-y:auto}
+/* ────────────────────────── FOOTER ────────────────────────── */
+footer{border-top:1px solid var(--line);padding:44px 56px 40px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+footer .brand{opacity:.6}
+footer small{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em}
+footer .foot-right{display:flex;gap:26px;font-size:11.5px;color:#5a564c;font-weight:600}
+footer .foot-right a:hover{color:var(--ink)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translate(-50%,80px);background:var(--ink);color:#fff;
+  font-family:var(--mono);font-size:11.5px;padding:13px 22px;border-radius:12px;letter-spacing:.04em;
+  box-shadow:0 20px 44px rgba(0,0,0,.3);opacity:0;transition:all .4s var(--ease);z-index:200}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.re{background:var(--red)}
+.toast.ok{background:var(--green)}
+
+/* ────────────────────────── EVIDENCE DRAWER ────────────────────────── */
+.drawer{position:fixed;inset:auto 0 0 0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -30px 80px rgba(0,0,0,.25);
+  transform:translateY(105%);transition:transform .5s var(--ease);z-index:300;max-height:84vh;overflow-y:auto}
 .drawer.open{transform:translateY(0)}
-.drawer-handle{width:44px;height:4px;background:#ddd;border-radius:2px;margin:14px auto 6px;cursor:pointer}
-.drawer .d-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px;position:sticky;top:0;background:#fff;z-index:2}
-.drawer h2{font-size:16px;font-weight:900;letter-spacing:.5px}
-.drawer h2 .arrow{color:#adb0b8;font-family:'JetBrains Mono',monospace;font-weight:400;margin:0 6px}
-.drawer .d-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;color:#888;transition:all .2s}
-.drawer .d-close:hover{background:#f4f3ef;color:var(--text)}
-.d-grid{display:grid;grid-template-columns:260px 1fr;gap:24px}
-.d-call{display:flex;flex-direction:column;gap:14px}
-.d-call h4{font-size:9px;font-weight:800;letter-spacing:1.5px;color:#a39f96;text-transform:uppercase}
-.step-pill{display:flex;align-items:center;gap:9px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:all .2s;font-size:11px;font-weight:700}
-.step-pill:hover{border-color:#cfccc4;background:#fafaf8}
-.step-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
-.step-pill em{font-style:normal;color:#a6a29a;font-weight:500;margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px}
-.d-evidence h4{font-size:9px;font-weight:800;letter-spacing:1.5px;color:#a39f96;text-transform:uppercase;margin:4px 0 12px}
-.ev-quote{border-left:3px solid var(--green);padding:16px 18px;font-size:14px;line-height:1.7;color:#333;background:#fafaf8;border-radius:0 10px 10px 0;margin-bottom:18px;font-weight:500}
-.ev-rows{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px}
-.ev-row{border-bottom:1px dashed #ecebe5;padding-bottom:8px}
-.ev-row .k{font-size:9px;font-weight:700;letter-spacing:1px;color:#a39f96;text-transform:uppercase;margin-bottom:3px}
-.ev-row .v{font-size:12px;font-weight:600}
-.ev-row .v.conf{color:var(--green)}
-.ev-row .v.decision{color:var(--green);font-weight:800}
-.ev-row .v.callid{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;word-break:break-all}
-.ev-row .v.muted{color:#777;font-weight:500}
-.decision-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(22,163,74,.12);color:var(--green);font-weight:800;border-radius:14px;padding:8px 14px;font-size:12px;letter-spacing:1px}
-.integrity{margin-top:18px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.int-head{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:1px;background:#fafaf8}
-.int-head .ic{transition:transform .25s;color:#999;font-size:12px}
-.integrity.open .int-head .ic{transform:rotate(180deg)}
-.int-body{display:none;padding:10px 14px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#6a675f;line-height:1.9;background:#fdfdfc}
+.drawer .handle{width:46px;height:4px;background:var(--line);border-radius:2px;margin:14px auto 4px;cursor:pointer}
+.drawer .d-body{padding:18px 44px 40px;max-width:900px;margin:0 auto}
+.drawer .d-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.drawer .d-head h2{font-family:var(--serif);font-weight:600;font-size:26px}
+.drawer .d-head h2 .to{color:var(--green)}
+.drawer .d-close{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);font-size:14px;color:var(--muted);transition:all .2s}
+.drawer .d-close:hover{background:var(--card);color:var(--ink)}
+.ev-quote{border-left:3px solid var(--green);background:#f7faf7;border-radius:0 12px 12px 0;padding:18px 22px;
+  font-family:var(--serif);font-style:italic;font-size:17px;line-height:1.55;color:#232220}
+.ev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 30px;margin-top:26px}
+.ev-row{padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.ev-row .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.ev-row .v{font-size:13.5px;font-weight:600;line-height:1.5}
+.ev-row .v.conf{color:var(--green);font-family:var(--mono)}
+.ev-row .v.mono{font-family:var(--mono);font-size:11px;word-break:break-all}
+.decision-badge{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;font-size:12px;
+  font-weight:800;letter-spacing:.08em;border-radius:999px;padding:8px 16px}
+.ev-transitions{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.ev-transitions .tp{font-family:var(--mono);font-size:9.5px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted);cursor:pointer;transition:all .2s}
+.ev-transitions .tp.cur{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ev-transitions .tp:hover{border-color:var(--ink)}
+.integrity{margin-top:30px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.integrity .int-head{display:flex;justify-content:space-between;padding:14px 18px;cursor:pointer;background:var(--card);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.integrity .int-head .arrow{transition:transform .3s;color:var(--faint)}
+.integrity.open .int-head .arrow{transform:rotate(180deg)}
+.integrity .int-body{display:none;padding:18px;background:#15161a;color:#dfe3e8;font-family:var(--mono);font-size:10.5px;line-height:2}
 .integrity.open .int-body{display:block}
-.int-body .chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
-.int-body .h{font-size:9px;background:#f0efea;border-radius:4px;padding:2px 7px;word-break:break-all;max-width:280px}
-.int-body .prev{color:var(--amber)}
-.int-body .steph{color:var(--green)}
+.integrity .chain{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.integrity .hash{background:#1e2026;border-radius:6px;padding:4px 9px;word-break:break-all;max-width:340px}
 
-/* ── STAGGER ── */
-@keyframes fade-up{0%{opacity:0;transform:translateY(24px)}100%{opacity:1;transform:translateY(0)}}
-.hero-left{animation:fade-up .8s ease-out both}
-.hero-right{animation:fade-up .8s ease-out .15s both}
-.case-card{animation:fade-up .65s ease-out .28s both}
-.scene{animation:fade-up .7s ease-out .38s both}
-.board-section{animation:fade-up .6s ease-out .55s both}
-.footer{animation:fade-up .6s ease-out .9s both}
+/* misc */
+.hint-bar{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.08em;margin-top:30px}
+.loading,.empty{font-family:var(--mono);font-size:12px;color:var(--muted);padding:40px;text-align:center}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.reveal.in{opacity:1;transform:none}
 
-/* ── NO CASES ── */
-.no-cases{display:none;text-align:center;padding:80px 40px;color:var(--muted)}
-.no-cases code{background:#f0f0ec;padding:4px 10px;border-radius:6px;font-size:12px}
-
-/* ── REDUCED MOTION ── */
 @media(prefers-reduced-motion:reduce){
-  .arm-upper,.arm-lower,.joint-shoulder,.joint-elbow,.joint-wrist,.arm-head,.phone,.ring,.callout,.cell,.attack{animation:none!important;transition:none!important}
-  .cell,.attack{opacity:1!important;transform:none!important}
+  .reveal{opacity:1;transform:none;transition:none}
+  .marquee-track{animation:none}
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
-
-/* ── RESPONSIVE ── */
-@media(max-width:900px){
-  .hero{grid-template-columns:1fr;gap:14px}
-  .case-card,.board,.attacks{grid-template-columns:1fr 1fr}
-  .scene{height:250px;margin:14px 20px}
-  .d-grid{grid-template-columns:1fr}
-  .ev-rows{grid-template-columns:1fr}
-  .attacks{grid-template-columns:1fr}
+@media(max-width:1080px){
+  .hero{grid-template-columns:1fr;padding-top:44px}
+  .scene-wrap{height:420px;max-width:620px}
+  .layers,.demo-grid,.dec,.demo-cols{grid-template-columns:1fr}
+  .path{grid-template-columns:1fr 1fr}
+  .attacks,.stats{grid-template-columns:1fr 1fr}
+  .case-panel{position:static;padding-right:0}
+  .wrap{padding:0 28px}
+  .board{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  .nav-links{display:none}
+  .path,.attacks,.stats,.ev-grid{grid-template-columns:1fr}
+  .board{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
-
-<div class="frame">
-<div class="panel">
+<div class="frame"><div class="panel">
 
 <nav>
-  <span class="nav-pill">We're hiring</span>
-  <span class="nav-brand">MI<b>SE</b></span>
-  <div class="nav-menu"><i></i><i></i><i></i></div>
+  <a class="brand" href="#/"><span class="sig"></span>MISE<em>&nbsp;· recovery</em></a>
+  <div class="nav-links">
+    <a href="#/" data-nav>Home</a>
+    <a href="#/demo" data-nav>Demo</a>
+    <a href="#/protocol" data-nav>Protocol</a>
+  </div>
+  <div class="nav-cta">
+    <a class="btn blue small" href="#/demo">Open demo <span>→</span></a>
+  </div>
 </nav>
 
-<div class="hero">
-  <div class="hero-left">
-    <h1>Get a closed<br>restaurant back on the<br><span class="soft">road to reopening.</span></h1>
-    <div class="pipe" id="pipe"></div>
-  </div>
-  <div class="hero-right">
-    <div class="dash">— Restaurant Recovery<br>with <b>Voice AI</b></div>
-    <button class="book-btn" onclick="document.querySelector('.board-section').scrollIntoView({behavior:'smooth'})">Book a demo</button>
-    <span class="seed">Harbor Kitchen #04 · failed inspection · case live</span>
-  </div>
-</div>
-
-<!-- CASE CARD -->
-<div class="case-card" id="case-card" style="display:none">
-  <div class="cc">
-    <div class="cc-label">Location</div>
-    <div class="cc-val" id="cc-location">—</div>
-  </div>
-  <div class="cc">
-    <div class="cc-label">Case status</div>
-    <div class="cc-val" id="cc-status">—</div>
-  </div>
-  <div class="cc">
-    <div class="cc-label">Blocker</div>
-    <div class="cc-val" id="cc-blocker">—</div>
-  </div>
-  <div class="cc">
-    <div class="cc-label">Why it hasn't moved</div>
-    <div class="cc-val small" id="cc-why">—</div>
-  </div>
-</div>
-
-<div class="case-card" id="na-card" style="display:none">
-  <div class="cc">
-    <div class="cc-label">MISE's next action</div>
-    <div class="cc-val mono" id="cc-next">—</div>
-  </div>
-  <div class="cc">
-    <div class="cc-label">CALL-E executes</div>
-    <div class="cc-val" id="cc-calle">—</div>
-  </div>
-  <div class="cc">
-    <div class="cc-label">CONTRACTOR gate</div>
-    <div class="cc-val mono" id="cc-gate">—</div>
-  </div>
-  <div class="cc">
-    <div class="cc-label">Evidence requirement</div>
-    <div class="cc-val small" id="cc-req">—</div>
-  </div>
-</div>
-
-<!-- 3D SCENE -->
-<div class="scene" id="scene">
-  <div class="scene-inner" id="tilt">
-    <div class="floor"></div>
-    <div class="arm">
-      <div class="arm-base"></div>
-      <div class="arm-pedestal"></div>
-      <div class="joint joint-shoulder"></div>
-      <div class="arm-upper"></div>
-      <div class="joint joint-elbow"></div>
-      <div class="arm-lower"></div>
-      <div class="joint joint-wrist"></div>
-      <div class="arm-head"></div>
-      <div class="phone"><div class="ring"></div></div>
-    </div>
-    <div class="callout callout-left" id="cl-left">
-      <div class="cl-status" id="cl-status">STATUS: —</div>
-      <div class="cl-mode">MODE: AUTONOMOUS</div>
-      <div class="cl-line"></div>
-      <div class="cl-time" id="cl-time">00:00:00</div>
-    </div>
-    <div class="callout callout-right" id="cl-right">
-      <div class="cr-title">Phone Evidence</div>
-      <div id="cr-lines"><div class="cr-line">Awaiting first call…</div></div>
+<!-- ══════════════════ LANDING ══════════════════ -->
+<section class="view" id="view-landing">
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="eyebrow reveal in"><span class="dot"></span>Failed inspection · Harbor Kitchen #04 · case live</div>
+        <h1 class="reveal in" style="transition-delay:.06s">A restaurant is closed.<br><span class="soft">MISE opens a</span> recovery <span class="soft">path</span> — <span class="hl">by phone.</span></h1>
+        <div class="hero-sub reveal in" style="transition-delay:.14s"><span class="k">MISE coordinates the phone work</span> required to move a failed inspection back toward reopening — and refuses to advance the case unless the calls produce sufficient evidence.</div>
+        <div class="hero-cta reveal in" style="transition-delay:.22s">
+          <a class="btn blue" href="#/demo">Watch it run <span>→</span></a>
+          <a class="btn ghost" href="#/protocol">The protocol</a>
+        </div>
+        <div class="proof-row reveal in" style="transition-delay:.3s">
+          <div class="proof"><span class="n" id="stat-cases">–</span><span class="l">live cases</span></div>
+          <div class="proof"><span class="n" id="stat-trans">–</span><span class="l">transitions</span></div>
+          <div class="proof"><span class="n" id="stat-conf">–</span><span class="l">avg confidence</span></div>
+          <div class="proof"><span class="n" id="stat-chain">–</span><span class="l">ledger checks</span></div>
+        </div>
+      </div>
+      <div class="scene-wrap reveal in" style="transition-delay:.18s">
+        <canvas id="stage"></canvas>
+        <div class="hud" id="hud-shoulder"><div class="box"><div class="k">Joint · shoulder</div><div class="v mono">AZ −12.4°</div></div><div class="tail"></div></div>
+        <div class="hud" id="hud-head"><div class="box"><div class="k">Phone · active</div><div class="v live" id="hud-status">RINGING</div></div><div class="tail"></div></div>
+        <div class="hud" id="hud-base"><div class="box"><div class="k">Signal · live clock</div><div class="v mono" id="hud-clock">00:00:00</div></div><div class="tail"></div></div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- BOARD -->
-<div class="board-section">
-  <div class="board" id="board"><div class="cell" style="opacity:1;transform:none;grid-column:1/-1;padding:16px;color:#999;font-size:12px">Loading recovery board…</div></div>
-</div>
+  <div class="marquee"><div class="marquee-track" id="marquee"></div></div>
 
-<!-- ATTACK LAB -->
-<div class="attack-head">The attack lab — proof the board does not move on words</div>
-<div class="attacks" id="attacks"></div>
+  <div class="wrap">
+    <!-- THE BOARD -->
+    <div class="section" id="product">
+      <div class="section-head reveal">
+        <div class="kicker">01 · The recovery board</div>
+        <h2>Five moves separate closed from reopening.</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="path reveal" id="landing-path"></div>
+      <div class="arrowflow" id="arrowflow"><b>CASE</b><span class="sep">›</span>ENGINE <span class="sep">›</span>DECIDES NEXT CALL <span class="sep">›</span>CALL-E <span class="sep">›</span>PHONE <span class="sep">›</span>EVIDENCE <span class="sep">›</span>GATE <span class="sep">›</span>BOARD MOVES — OR NOT</div>
+    </div>
 
-<!-- FOOTER -->
-<div class="footer">
-  <div class="footer-left">CALL-E makes the calls. <em>MISE decides what becomes true.</em></div>
-  <div class="footer-trust">
-    <span class="footer-trust-label">Trusted by industry leaders</span>
-    <div class="footer-logos">
-      <span class="b">NATIONAL SANITATION</span><span>APEX DRAIN</span>
-      <span class="b">CITY INSPECT</span><span>foodsafe</span>
-      <span class="b">grillworks</span><span>loll designs</span>
+    <!-- TWO LAYERS -->
+    <div class="section">
+      <div class="section-head reveal">
+        <div class="kicker">02 · One product, two layers</div>
+        <h2>Move the case. Prove the move.</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="layers">
+        <div class="layer reveal">
+          <div class="tag">Layer 01 — Move the case</div>
+          <h3>The recovery engine</h3>
+          <p>The engine reads the case state and decides the one next phone action. The first call's answer determines the second; the second determines the third. CALL-E performs the calls; the result feeds the gate.</p>
+          <pre><span class="c"># engine decides what to ask next</span>
+action = case.next_action()
+<span class="c"># CALL-E does the talking</span>
+result = call_e_call(action[<span class="s">"goal"</span>], action[<span class="s">"to"</span>])
+<span class="c"># gate decides whether it is enough</span>
+verdict = verify_call(case.state, result)</pre>
+        </div>
+        <div class="layer reveal" style="transition-delay:.1s">
+          <div class="tag wheat">Layer 02 — Prove the move</div>
+          <h3>The evidence gate</h3>
+          <p>Every transition is backed by what a human actually said — exact statement, extracted commitment, date, confidence, call ID. Append-only, hash-linked. The board can be <b>verified</b>, not just claimed.</p>
+          <pre><span class="y">if</span> verdict.accepted:
+    case.advance()
+<span class="y">else</span>:
+    <span class="r"># BLOCKER_UNCONFIRMED · PROVIDER_HEDGED
+    <span class="r"># UNSPECIFIED_FIX_TIME · PROOF_NOT_TRUSTED</span>
+    <span class="c"># board does not move</span></span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- THE INVARIANT -->
+    <div class="section">
+      <div class="section-head reveal">
+        <div class="kicker">03 · The invariant</div>
+        <h2>A phone call is not permission to change the case. Evidence is.</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="inv reveal">
+        <div class="dec">
+          <div class="side">
+            <div class="line re"><span class="cs">call · provider</span>"We'll probably get to it sometime."<span class="badge re" style="margin-left:10px">REJECTED</span><br><span class="c" style="font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:8px;display:block">PROVIDER_HEDGED — no clock time, no commitment</span></div>
+            <div class="line ok"><span class="cs">call · provider</span>"Yes, grease-trap service at 4:30&nbsp;PM today, we commit."<span class="badge ok" style="margin-left:10px">ACCEPTED</span><br><span class="c" style="font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:8px;display:block">explicit action · date · time · actor</span></div>
+          </div>
+          <div class="verdict">
+            <div class="vl"><span class="arrow">→</span><div><div class="state">Board stays <span style="color:var(--red)">REMEDIATION REQUIRED</span></div><div class="rule">no evidence, no transition</div></div></div>
+            <div class="vl"><span class="arrow">→</span><div><div class="state">Board moves → <span style="color:var(--green)">REMEDIATION BOOKED</span></div><div class="rule">evidence clears the gate</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATTACK LAB -->
+    <div class="section">
+      <div class="section-head reveal">
+        <div class="kicker">04 · The attack lab</div>
+        <h2>Three ways the board refuses to move.</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="attacks" id="landing-attacks"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="section">
+      <div class="section-head reveal">
+        <div class="kicker">05 · Verification, not vibes</div>
+        <h2>A ledger you can actually check.</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="stats">
+        <div class="stat reveal"><div class="n" id="s-cases">–</div><div class="l">recovery cases</div></div>
+        <div class="stat reveal"><div class="n" id="s-tests">73</div><div class="l">tests · all green</div></div>
+        <div class="stat reveal"><div class="n" id="s-mut">5000</div><div class="l">protocol mutations</div></div>
+        <div class="stat reveal"><div class="n" id="s-viol">0</div><div class="l">violations</div></div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="section" style="padding-bottom:80px">
+      <div class="cta reveal">
+        <h2>Watch the board move on evidence.</h2>
+        <p>Four calls. Three rejected attacks. One reopening path.</p>
+        <a class="btn blue" href="#/demo">Open the live demo <span>→</span></a>
+        <div class="mono-line">CALL-E makes the calls. MISE decides what becomes true.</div>
+      </div>
     </div>
   </div>
-  <div class="footer-right"><span class="dot-live"></span> ENGINE LIVE · CONTRACTOR</div>
-</div>
+</section>
 
-<div class="no-cases" id="no-cases">
-  <h2>No recovery cases</h2>
-  <code>python3 demo.py --db contractor.db</code>
-</div>
+<!-- ══════════════════ DEMO ══════════════════ -->
+<section class="view" id="view-demo">
+  <div class="demo-top">
+    <div class="crumbs"><b>MISE / Demo</b> · recovery workspace</div>
+    <div class="right">
+      <span class="pill live" id="calle-pill"><span class="dot"></span><span id="calle-label">CALL-E SIMULATION</span></span>
+      <span class="pill" id="mode-pill"><span class="dot" style="background:var(--blue)"></span>MODE: AUTONOMOUS</span>
+      <a class="btn ghost small" href="#/">← Home</a>
+    </div>
+  </div>
 
-</div><!-- panel -->
-</div><!-- frame -->
+  <div class="demo-grid">
+    <div class="case-panel">
+      <div class="cp">
+        <div class="k">Case · location</div>
+        <div class="big" id="d-loc">—</div>
+        <div><span class="state closed" id="d-state">CLOSED</span></div>
+      </div>
+      <div class="cp">
+        <div class="k">Blocker</div>
+        <div class="why" id="d-blocker">—</div>
+      </div>
+      <div class="cp">
+        <div class="k">Why it hasn't moved</div>
+        <div class="why" id="d-why">—</div>
+      </div>
+      <div class="cp next">
+        <div class="k">MISE's next action</div>
+        <div class="act" id="d-next">—</div>
+        <div class="to" id="d-nextto">—</div>
+      </div>
+      <div class="cp">
+        <div class="k">CALL-E · real telephony</div>
+        <span class="live-tag" id="d-livetag"><span class="dot"></span>live calls disabled — simulation</span>
+      </div>
+    </div>
+
+    <div class="demo-main">
+      <div class="pipeline"><span>RECOVERY ENGINE</span><i>→</i><span>NEXT ACTION</span><i>→</i><span class="hot">CALL-E</span><i>→</i><span>PHONE CALL</span><i>→</i><span>EVIDENCE</span><i>→</i><span>CONTRACTOR GATE</span><i>→</i><span>BOARD</span></div>
+
+      <div class="advance-wrap">
+        <button class="btn blue" id="advance-btn">▶ Run the next call</button>
+        <span class="hint" id="advance-hint">engine → CALL-E → gate → board</span>
+        <button class="btn ghost" id="reset-btn" style="margin-left:auto">Reset demo</button>
+      </div>
+
+      <div class="board" id="demo-board">
+        <div class="empty">Loading recovery board…</div>
+      </div>
+
+      <div class="demo-cols">
+        <div class="log">
+          <div class="head"><h3>Call log · evidence</h3><span class="count" id="log-count">0 calls</span></div>
+          <div id="log-body"><div class="empty">No phone calls yet. This board has never been moved — run the first call.</div></div>
+        </div>
+        <div>
+          <div class="log" style="height:100%">
+            <div class="head"><h3>Attack lab</h3><span class="count">usually rejected</span></div>
+            <div class="mini-attacks" id="mini-attacks"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ PROTOCOL ══════════════════ -->
+<section class="view" id="view-protocol">
+  <div class="wrap">
+    <div class="protocol-hero">
+      <div class="eyebrow"><span class="dot"></span>The reusable primitive</div>
+      <h1 class="reveal in">CONTRACTOR — a commitment protocol for phone agents.</h1>
+      <p class="reveal in" style="transition-delay:.1s">One input, one output, one rule. A phone-derived claim becomes evidence only when it satisfies the gate; a state transition cannot occur without an accepted commitment.</p>
+    </div>
+
+    <div class="code-card reveal in" style="transition-delay:.2s">
+      <span class="c"># CONTRACTOR · the primitive</span><br>
+      <span class="k">from</span> contractor <span class="k">import</span> verify_call<br><br>
+      verdict = verify_call(state, transcript, extracted, confidence, source)<br><br>
+      <span class="g"># verdict.accepted  →  {accepted: True, to_state, step_type}</span><br>
+      <span class="r"># verdict.rejected  →  {accepted: False, reasons: [CODE]}</span><br><br>
+      <span class="k">if</span> verdict[<span class="s">"accepted"</span>]:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;case.advance(verdict)  <span class="c"># board moves, ledger appends</span><br>
+      <span class="k">else</span>:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="r"># BLOCKER_UNCONFIRMED · PROVIDER_HEDGED</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="r"># UNSPECIFIED_FIX_TIME · PROOF_NOT_TRUSTED · …</span><br><br>
+      <span class="note">— invariant —</span><br>
+      <span class="c"># a state transition cannot occur without an accepted commitment<br>
+      # committed terms ⊆ mutually confirmed terms</span>
+    </div>
+
+    <div class="section" style="padding-top:60px">
+      <div class="section-head reveal">
+        <div class="kicker">Reason codes</div>
+        <h2>Every rejection is legible.</h2>
+        <div class="rule"></div>
+      </div>
+      <div class="reasons" id="reasons"></div>
+    </div>
+  </div>
+</section>
+
+</div></div>
 
 <!-- EVIDENCE DRAWER -->
 <div class="drawer" id="drawer">
-  <div class="drawer-handle" onclick="closeDrawer()"></div>
-  <div class="d-top">
-    <h2 id="drawer-title">—</h2>
-    <button class="d-close" onclick="closeDrawer()">✕</button>
-  </div>
-  <div class="d-grid">
-    <div class="d-call">
-      <h4>Transition</h4>
-      <div id="drawer-pills"></div>
+  <div class="handle" onclick="closeDrawer()"></div>
+  <div class="d-body">
+    <div class="d-head">
+      <h2 id="drawer-title">—</h2>
+      <button class="d-close" onclick="closeDrawer()">✕</button>
     </div>
-    <div class="d-evidence">
-      <h4>Evidence — what actually moved the board</h4>
-      <div id="drawer-body"></div>
+    <div class="ev-transitions" id="drawer-pills"></div>
+    <div class="ev-quote" id="drawer-quote">…</div>
+    <div class="ev-grid" id="drawer-grid"></div>
+    <div class="integrity" id="drawer-integrity">
+      <div class="int-head" onclick="this.parentElement.classList.toggle('open')">Integrity · hash-linked ledger <span class="arrow">▾</span></div>
+      <div class="int-body" id="drawer-chain"></div>
     </div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-const STATES=['CLOSED','BLOCKER_IDENTIFIED','REMEDIATION_BOOKED','REINSPECTION_REQUESTED','REOPENING_PATH_ACTIVE'];
-const LABELS=[
-  {t:'Closed',s:'Health inspection failure'},
-  {t:'Blocker Identified',s:'Violation named by authority'},
-  {t:'Remediation Booked',s:'Provider committed to fix window'},
-  {t:'Reinspection Requested',s:'Authority accepted path'},
-  {t:'Reopening Path Active',s:'Waiting on authority · physical reinspection'}
-];
-const REJECTS=['BLOCKER_UNCONFIRMED','PROVIDER_HEDGED','UNSPECIFIED_FIX_TIME','NO_FIX_WINDOW','PROOF_NOT_TRUSTED','NO_DATED_REOPENING','LOW_CONFIDENCE','VIOLATION_UNSTRUCTURED'];
-const REJECT_TEXT={
-  BLOCKER_UNCONFIRMED:'vague or hedged — not a confirmed blocker',
-  PROVIDER_HEDGED:'hedged — not a firm commitment',
-  UNSPECIFIED_FIX_TIME:'no clock time — not bookable',
-  NO_FIX_WINDOW:'no fix window at all',
-  PROOF_NOT_TRUSTED:'untrusted source — words are not proof',
-  NO_DATED_REOPENING:'recovery is a date, not a promise',
-  LOW_CONFIDENCE:'extraction confidence too low',
-  VIOLATION_UNSTRUCTURED:'violation not structured'
-};
-const NEXT_GOALS={
-  'CLOSED':['Call the health department','Call the health department to identify the blocking violation','Explicit violation + requirement','A named violation and the exact corrective requirement, in the authority\'s words.'],
-  'BLOCKER_IDENTIFIED':['Call the remediation provider','Book a licensed provider for the blocker','Firm commitment + clock time','An explicit service commitment with a concrete date and clock time.'],
-  'REMEDIATION_BOOKED':['Call the health department','Request the earliest reinspection process','Reinspection path confirmed','The authority confirms a reinspection path in its own words.'],
-  'REINSPECTION_REQUESTED':['Call the health department','Confirm reopening status and date','Dated reopening from trusted source','A dated reopening state from a trusted authority source.'],
-  'REOPENING_PATH_ACTIVE':['Waiting on authority','No active call — physical reinspection in the authority\'s hands','—','MISE does not declare compliance. The authority\'s next act moves this case.']
-};
+/* ════════════════════════════════ MISE APP ════════════════════════════════ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const human=s=>(s||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+const mono=t=>`<span style="font-family:var(--mono)">${t}</span>`;
+const escapeHtml=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const isLiveId=id=>id && id.startsWith('calle_');
 
-/* ── PARALLAX TILT ── */
-const scene=document.getElementById('scene');
-const tilt=document.getElementById('tilt');
-let tx=0,ty=0,cx=0,cy=0;
-scene.addEventListener('mousemove',e=>{
-  const r=scene.getBoundingClientRect();
-  tx=((e.clientX-r.left)/r.width-.5)*12;
-  ty=((e.clientY-r.top)/r.height-.5)*-6;
+let CASES=[], STATE={}, CALLE={live:false};
+let curStep=0;
+
+/* ───────────── ROUTER ───────────── */
+const ROUTES=['','demo','protocol'];
+function route(){
+  const h=location.hash.replace(/^#\/?/,'').split('?')[0];
+  const name=ROUTES.includes(h)?h:'';
+  $$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+(name||'landing')));
+  $$('[data-nav]').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#/'+(name?name:'')+''));
+  if(name==='demo'){renderDemoBoard()}
+  window.scrollTo({top:0});
+}
+window.addEventListener('hashchange',route);
+// avoid jumping to #/ anchor scroll weirdness
+document.addEventListener('click',e=>{
+  const a=e.target.closest('a[href^="#/"]');
+  if(a){e.preventDefault();if(location.hash===a.getAttribute('href'))route();else location.hash=a.getAttribute('href');}
 });
-scene.addEventListener('mouseleave',()=>{tx=0;ty=0});
-(function loop(){cx+=(tx-cx)*.08;cy+=(ty-cy)*.08;tilt.style.transform=`rotateY(${cx}deg) rotateX(${cy}deg)`;requestAnimationFrame(loop);})();
 
-/* ── SESSION CLOCK ── */
-let t0=Date.now();
-function tick(){
-  const s=Math.floor((Date.now()-t0)/1000);
-  document.getElementById('cl-time').textContent=
-    `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-  requestAnimationFrame(tick);
+/* ───────────── DATA ───────────── */
+async function load(){
+  try{CASES=(await (await fetch('/api/cases')).json())||[]}catch(e){CASES=[]}
+  try{STATE=(await (await fetch('/api/stats')).json())||{}}catch(e){}
+  try{CALLE=(await (await fetch('/api/calle')).json())||{live:false}}catch(e){}
 }
-tick();
+function primaryCase(){return CASES.find(c=>!c.location_id.startsWith('probe_'))||CASES[0]||null}
 
-/* ── RENDER ── */
-let currentCase=null;
+/* ════════════════════════════════ 3D ARM RENDERER ════════════════════════════════ */
+const ARM=(()=>{
+  const cv=$('#stage'), ctx=cv.getContext('2d');
+  let W,H,DBL,DPR=Math.min(devicePixelRatio||1,2);
+  const T={x:0,y:2.2,z:0};
+  let yawC=0.5,pitchC=0.42,eye={x:0,y:0,z:0};
+  let time=0;
 
-const human=(s)=>s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-const fmtTime=(iso)=>{try{const d=new Date(iso);return d.toISOString().replace('T',' · ').slice(0,19)}catch(e){return iso}};
-const isLive=(callId)=>!callId || callId.startsWith('calle_');
-
-function renderPipe(steps){
-  const el=document.getElementById('pipe');
-  el.innerHTML = '<span class="done">CASE OPENED</span><i>›</i><span class="done">PHONE WORK</span><i>›</i><span class="judge">VERIFIED RECOVERY</span>';
-}
-
-function renderCaseCard(c){
-  document.getElementById('case-card').style.display='grid';
-  document.getElementById('cc-location').textContent=c.location_name;
-  const st=document.getElementById('cc-status');
-  const terminal=c.state==='REOPENING_PATH_ACTIVE';
-  st.innerHTML=`<b class="status ${terminal?'path':'active'}">${terminal?'REOPENING PATH ACTIVE':c.state.replace(/_/g,' ')}</b>`;
-  document.getElementById('cc-blocker').textContent=c.blocker||'—';
-  document.getElementById('cc-why').textContent=c.why_stuck||'—';
-  document.getElementById('na-card').style.display='grid';
-  const na=(NEXT_GOALS[c.state]||[]);
-  document.getElementById('cc-next').textContent=na[0]||'—';
-  document.getElementById('cc-calle').textContent=na[1]||'—';
-  document.getElementById('cc-gate').textContent=na[2]||'—';
-  document.getElementById('cc-req').textContent=na[3]||'—';
-  document.getElementById('cl-status').textContent=`STATUS: ${terminal?'REOPENING PATH ACTIVE':c.state.replace(/_/g,' ')}`;
-}
-
-function renderEventLog(c){
-  const el=document.getElementById('cr-lines');
-  if(!c.steps.length){el.innerHTML='<div class="cr-line">No calls yet — awaiting first phone action</div>';return}
-  el.innerHTML=c.steps.map((s,i)=>{
-    const ts=new Date(s.at).toTimeString().slice(0,8);
-    const who=(s.who||'?').split(' ')[0].toLowerCase();
-    return`<div class="cr-line" style="animation:fade-up .4s ease-out ${i*.18}s both">
-      <b>${ts}</b> ${who} → <span class="ok">${s.to_state.replace(/_/g,' ')}</span>${isLive(s.call_id)?" · LIVE":''}</div>`;
-  }).join('');
-}
-
-function renderBoard(c){
-  const cur=STATES.indexOf(c.state);
-  const terminal=cur===STATES.length-1;
-  const board=document.getElementById('board');
-  let html='';
-  STATES.forEach((s,i)=>{
-    const done=i<cur||(i===cur&&terminal);
-    const isNow=i===cur&&!terminal;
-    const cls=done?'done':(isNow?'now':'future');
-    const num=('0'+(i+1)).slice(-2);
-    html+=`<div class="cell ${cls} ${terminal&&i===cur?'terminal final':''}" onclick="openDrawer(${i})" data-idx="${i}" style="transition-delay:${i*.1}s">
-      <div class="cell-top"><div class="cell-dot"></div><span class="cell-num">${num}</span></div>
-      <div class="cell-label">${LABELS[i].t}<small>${LABELS[i].s}</small></div>
-      <span class="proof-tag">${done?'EVIDENCED':isNow?'NEXT':'GATED'}</span>
-      <div class="cell-sub">${done?'✓ secured by phone evidence':isNow?'call in progress':terminal?'authority holds the next move':'blocked until evidence'}</div>
-    </div>`;
-  });
-  board.innerHTML=html;
-  setTimeout(()=>document.querySelectorAll('.cell').forEach((el,i)=>setTimeout(()=>el.classList.add('show'),i*110)),650);
-}
-
-function renderAttacks(){
-  const items=[
-    {kind:'block',at:'"Sounds like the grease trap."',verdict:'REJECTED',code:'BLOCKER_UNCONFIRMED',desc:'Vague observation — no named violation, no requirement. Board stays.'},
-    {kind:'block',at:'"We\'ll try to get someone out this afternoon."',verdict:'REJECTED',code:'PROVIDER_HEDGED',desc:'A hedge is not a commitment. No clerk time, no bookable fix.'},
-    {kind:'block',at:'Agent: "Health department approved reinspection."',verdict:'REJECTED',code:'PROOF_NOT_TRUSTED',desc:'An agent claim is not an authority record. Words never move the board.'},
-    {kind:'ok',at:'"Yes, we will service the grease trap today at 4:30 PM."',verdict:'ACCEPTED',code:'EXPLICIT + CLOCK TIME',desc:'Explicit service commitment, concrete time, responsible provider. Board moves.'}
-  ];
-  document.getElementById('attacks').innerHTML=items.map((a,i)=>`
-    <div class="attack ${a.kind}" style="transition-delay:${.6+i*.14}s">
-      <div class="at-head"><span class="at-tag">${a.kind==='block'?'rejected':'accepted'}</span><span class="at-code">${a.code}</span></div>
-      <div class="at-attack">${a.at}</div>
-      <div class="at-verdict">CONTRACTOR → ${a.verdict}</div>
-      <div class="at-desc">${a.desc}</div>
-    </div>`).join('');
-  setTimeout(()=>document.querySelectorAll('.attack').forEach(el=>el.classList.add('show')),900);
-}
-
-function checkDrawer(idx){
-  const step=(currentCase?.steps||[]).find(s=>s.to_state===STATES[idx]);
-  const pills=document.getElementById('drawer-pills');
-  pills.innerHTML=(currentCase?.steps||[]).map((s,i)=>{
-    const sel=(currentCase?.steps||[]).indexOf(step)===i;
-    return`<div class="step-pill" style="${sel?'background:#f4f3ef;border-color:#c8c4ba':''}" onclick="showEvidence(${idx},${i})">
-      <span class="dot"></span>${s.to_state.replace(/_/g,' ')}<em>${(s.confidence||0).toFixed(2)}</em></div>`;
-  }).join('')||'<div class="ev-row"><div class="k">No evidence</div><div class="v muted">This state has not been reached yet.</div></div>';
-}
-
-function showEvidence(idx, steppos){
-  const s=(currentCase?.steps||[])[steppos];
-  if(!s)return;
-  document.getElementById('drawer-title').innerHTML=`<span style="color:${s.to_state==='REOPENING_PATH_ACTIVE'?'var(--green)':'var(--text)'}">${s.to_state.replace(/_/g,' ')}</span><span class="arrow">»</span> evidence`;
-  const structured=s.structured||{};
-  const rows=Object.entries(structured).map(([k,v])=>{
-    let val=typeof v==='object'?JSON.stringify(v):String(v);
-    if(k==='confidence')return`<div class="ev-row"><div class="k">Confidence</div><div class="v conf">${(Number(v)*100).toFixed(0)}%</div></div>`;
-    return`<div class="ev-row"><div class="k">${k.replace(/_/g,' ')}</div><div class="v" style="${k==='reopening_date'?'color:var(--green)':''}">${val.replace(/"/g,'')}</div></div>`;
-  }).join('');
-  const secondsToHuman=(iso)=>{try{return new Date(iso).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return iso}};
-  document.getElementById('drawer-body').innerHTML=`
-    <div class="ev-quote">"${s.statement}"</div>
-    <div class="ev-rows">
-      <div class="ev-row"><div class="k">Call</div><div class="v">${s.who||'—'}</div></div>
-      <div class="ev-row"><div class="k">Date</div><div class="v">${secondsToHuman(s.at)}${isLive(s.call_id)?' <span style="color:var(--green);font-size:9px">· LIVE CALL-E</span>':''}</div></div>
-      ${rows}
-      <div class="ev-row"><div class="k">Decision</div><div class="v"><span class="decision-badge">✓ ACCEPTED</span></div></div>
-      <div class="ev-row"><div class="k">Why</div><div class="v">${s.why||'Phone evidence passed the CONTRACTOR gate.'}</div></div>
-      <div class="ev-row"><div class="k">Call ID</div><div class="v callid">${s.call_id}</div></div>
-    </div>
-    <div class="integrity" id="integrity-box">
-      <div class="int-head" onclick="document.getElementById('integrity-box').classList.toggle('open')">
-        <span>INTEGRITY — hash-linked ledger</span><span class="ic">▾</span>
-      </div>
-      <div class="int-body">
-        <div>Append-only ledger, each step links to the previous content hash.</div>
-        <div class="chain">
-          <div><div style="color:var(--amber);font-weight:700">PREVIOUS</div><span class="h prev">${s.previous_hash}</span></div>
-          <div>→</div>
-          <div><div style="color:var(--green);font-weight:700">THIS STEP</div><span class="h steph">${s.step_hash}</span></div>
-        </div>
-        <div style="margin-top:8px;color:#999">Tampering with any step breaks the chain — verified on every load.</div>
-      </div>
-    </div>`;
-  checkDrawer(idx);
-}
-function openDrawer(idx){
-  if(!currentCase)return;
-  document.getElementById('drawer-title').innerHTML=`<span>${STATES[idx].replace(/_/g,' ')}</span><span class="arrow">»</span> evidence`;
-  checkDrawer(idx);
-  const step=(currentCase?.steps||[]).find(s=>s.to_state===STATES[idx]);
-  if(step){const pi=(currentCase?.steps||[]).indexOf(step);showEvidence(idx,pi)}
-  document.getElementById('drawer').classList.add('open');
-}
-function closeDrawer(){document.getElementById('drawer').classList.remove('open')}
-
-async function boot(){
-  let cases=[];
-  try{const r=await fetch('/api/cases');cases=await r.json()}catch(e){}
-  if(!cases.length){
-    document.getElementById('no-cases').style.display='block';
-    document.getElementById('board').innerHTML='<div class="cell" style="opacity:1;transform:none;grid-column:1/-1">No cases yet</div>';
-    return;
+  function resize(){
+    const r=cv.parentElement.getBoundingClientRect();
+    W=r.width;H=r.height;DPR=Math.min(devicePixelRatio||1,2);
+    cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
   }
-  // pick newest non-probe case
-  const c=(cases.find(x=>!x.location_id.startsWith('probe_'))||cases[0]);
-  currentCase=c;
-  renderPipe(c);renderCaseCard(c);
-  renderEventLog(c);renderBoard(c);renderAttacks();
+  window.addEventListener('resize',resize);resize();
+
+  const mEye=()=>{const y=yawC,p=pitchC;eye={x:T.x+11*Math.sin(y)*Math.cos(p),y:T.y+11*Math.sin(p),z:T.z+11*Math.cos(y)*Math.cos(p)}};
+  function proj(p){ // returns {x,y,z,ok}
+    const dx=p.x-eye.x,dy=p.y-eye.y,dz=p.z-eye.z;
+    const cz=Math.cos(yawC),sz=Math.sin(yawC),cp=Math.cos(pitchC),sp=Math.sin(pitchC);
+    // cam basis
+    const fx=-Math.sin(yawC)*Math.cos(pitchC), fy=Math.cos(yawC)*Math.sin(pitchC), fz=-Math.cos(yawC)*Math.cos(pitchC);
+    const rx=Math.cos(yawC), rz=-Math.sin(yawC);
+    const ux=Math.sin(yawC)*Math.sin(pitchC), uy=Math.cos(pitchC), uz=-Math.cos(yawC)*Math.sin(pitchC);
+    const cx2=dx*rx+dz*rz;
+    const cy2=dy*uy+(dx*ux+dz*uz);
+    const cz2=dx*fx+dy*fy+dz*fz;
+    if(cz2<=0.1)return{ok:false};
+    const f=W*0.85;
+    return{x:W/2+cx2*f/cz2,y:H/2-cy2*f/cz2,z:cz2,ok:true};
+  }
+
+  function mul(a,b){ // 3x3 row-major
+    const m=[0,0,0,0,0,0,0,0,0];
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++){let s=0;for(let k=0;k<3;k++)s+=a[i*3+k]*b[k*3+j];m[i*3+j]=s;}
+    return m;
+  }
+  const rotY=t=>{const c=Math.cos(t),s=Math.sin(t);return[c,0,s,0,1,0,-s,0,c]};
+  const rotZ=t=>{const c=Math.cos(t),s=Math.sin(t);return[c,-s,0,s,c,0,0,0,1]};
+  function trans(m,p){return{x:m[0]*p.x+m[3]*p.y+m[6]*p.z,y:m[1]*p.x+m[4]*p.y+m[7]*p.z,z:m[2]*p.x+m[5]*p.y+m[8]*p.z}}
+
+  const L={x:0.55,y:0.62,z:0.42}; // light dir
+
+  // draw a shaded box given center, orientation rows (3 basis vecs), half-sizes, color, alpha
+  function drawBox(c,rt,hs,col,alpha=1){
+    const corners=[];
+    for(let i=0;i<8;i++){
+      const sx=(i&1?1:-1),sy=(i&2?1:-1),sz2=(i&4?1:-1);
+      corners.push({x:c.x+rt[0]*hs[0]*sx+rt[3]*hs[1]*sy+rt[6]*hs[2]*sz2,
+                    y:c.y+rt[1]*hs[0]*sx+rt[4]*hs[1]*sy+rt[7]*hs[2]*sz2,
+                    z:c.z+rt[2]*hs[0]*sx+rt[5]*hs[1]*sy+rt[8]*hs[2]*sz2});
+    }
+    const faces=[[0,1],[0,0],[0,2],[0,1],[0,2],[0,1]]; // sign of basis by index
+    const idx=[[0,4,6,2],[1,3,7,5],[0,1,5,4],[2,6,7,3],[0,2,3,1],[4,6,7,5]];
+    const faceMap=[ [0,6,4,2],[1,7,5,3],[0,4,5,1],[2,6,7,3],[0,1,3,2],[4,5,7,6] ];
+    const normals=[ [1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1] ];
+    const camY=0;// not needed
+    const projF=faces.map(()=>({ok:false}));
+    const draw=[];
+    for(let f=0;f<6;f++){
+      const n=normals[f];
+      // world normal
+      const wn={x:rt[0]*n[0]+rt[3]*n[1]+rt[6]*n[2],
+                y:rt[1]*n[0]+rt[4]*n[1]+rt[7]*n[2],
+                z:rt[2]*n[0]+rt[5]*n[1]+rt[8]*n[2]};
+      // face center
+      const fc={x:c.x+n[0]*hs[0]*rt[0]+n[1]*hs[1]*rt[3]+n[2]*hs[2]*rt[6],
+                y:c.y+n[0]*hs[0]*rt[1]+n[1]*hs[1]*rt[4]+n[2]*hs[2]*rt[7],
+                z:c.z+n[0]*hs[0]*rt[2]+n[1]*hs[1]*rt[5]+n[2]*hs[2]*rt[8]};
+      const view=proj(fc);
+      if(!view.ok)continue;
+      const facing={x:T.x-eye.x,y:T.y+0.6-eye.y,z:T.z-eye.z};
+      const dot0=wn.x*(fc.x-eye.x)+wn.y*(fc.y-eye.y)+wn.z*(fc.z-eye.z);
+      if(dot0<0) continue;
+      // light shade
+      const dif=Math.max(0,wn.x*L.x+wn.y*L.y+wn.z*L.z);
+      const shd=(0.28+0.72*dif)*(1-0.06*(view.z/20));
+      const ptsIdx=faceMap[f];
+      const pts=ptsIdx.map(pi=>proj(corners[pi]));
+      if(!pts.every(p=>p.ok))continue;
+      const zavg=pts.reduce((a,p)=>a+p.z,0)/4;
+      draw.push({z:zavg,pts,f,shd});
+    }
+    draw.sort((a,b)=>b.z-a.z);
+    for(const d of draw){
+      const pts=d.pts.map(p=>({x:p.x,y:p.y}));
+      ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+      for(let k=1;k<pts.length;k++)ctx.lineTo(pts[k].x,pts[k].y);
+      ctx.closePath();
+      ctx.globalAlpha=alpha;
+      ctx.fillStyle=shadeColor(col,d.shd);
+      ctx.fill();
+      ctx.globalAlpha=1;
+      ctx.strokeStyle='rgba(0,0,0,.05)';ctx.lineWidth=.6;
+      ctx.stroke();
+    }
+  }
+  let _shadeCache={};
+  function shadeColor(hex,f){
+    const key=hex+((f*.9).toFixed(3));
+    if(_shadeCache[key]!==undefined)return _shadeCache[key];
+    const n=parseInt(hex.slice(1),16);let r=n>>16&255,g=n>>8&255,b=n&255;
+    r=Math.min(255,Math.round(r*f+ (255-r)*0.04));
+    g=Math.min(255,Math.round(g*f+ (255-g)*0.04));
+    b=Math.min(255,Math.round(b*f+ (255-b)*0.04));
+    const out=`rgb(${r},${g},${b})`;_shadeCache[key]=out;return out;
+  }
+
+  function drawFloor(){
+    ctx.save();
+    // radial glow
+    const g=ctx.createRadialGradient(W/2,H*0.72,10,W/2,H*0.74,W*0.44);
+    g.addColorStop(0,'rgba(200,150,80,.16)');g.addColorStop(1,'rgba(200,150,80,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle='rgba(0,0,0,.07)';ctx.lineWidth=1;
+    for(let i=-8;i<=8;i+=2){
+      const a=proj({x:i,y:0,z:8}),b=proj({x:i,y:0,z:-8});
+      const c=proj({x:8,y:0,z:i}),d=proj({x:-8,y:0,z:i});
+      if(a.ok&&b.ok){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+      if(c.ok&&d.ok){ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(d.x,d.y);ctx.stroke()}
+    }
+    ctx.restore();
+  }
+
+  // arm parts as shaded boxes; rt = cumulative rotation matrix
+  function drawArm(){
+    const swayX=Math.sin(time*.9)*.14;
+    const swayY=Math.sin(time*.5)*.1+0.05;
+    const lift=Math.sin(time*.6)*.05;
+    const RY=rotY(swayY), RZ=rotZ(swayX);
+    const shoulder=mul(RY,RZ);
+
+    // pedestal
+    drawBox({x:0,y:1.55,z:0},[1,0,0,0,1,0,0,0,1],[0.75,1.55,0.75],'#3a3a3e');
+    drawBox({x:0,y:2.9,z:0},[1,0,0,0,1,0,0,0,1],[1.0,0.12,1.0],'#232326');
+
+    // shoulder joint sphere→ box
+    const shoulderCenter={x:0,y:3.15,z:0};
+    drawBox(shoulderCenter,shoulder,[0.42,0.42,0.42],'#5a5a60');
+
+    // upper arm: rotate up
+    const upAng=-0.25+lift;
+    const RupZ=rotZ(upAng);
+    const Ru=mul(shoulder,RupZ);
+    const upLen=2.5;
+    const upC={x:Ru[6]*upLen/2, y:3.15+Ru[7]*upLen/2, z:Ru[8]*upLen/2};
+    // upper arm is vertical-ish along local Z? Build: local +Z = arm direction
+    let armDir={x:Ru[2],y:Ru[5],z:Ru[8]};
+    // reorient: treat local z axis as length; box half sizes [w,w,len]
+    drawBox(upC,Ru,[0.30,0.30,upLen/2],'#b9b3a6');
+
+    // elbow = shoulder + Ru*[0,0,upLen]
+    const elbow={x:shoulderCenter.x+Ru[2]*upLen, y:shoulderCenter.y+Ru[5]*upLen, z:shoulderCenter.z+Ru[8]*upLen};
+    const bend=0.2+Math.sin(time*1.1)*0.15;
+    const RlowZ=rotZ(bend);
+    const Rl=mul(Ru,RlowZ);
+    const loLen=2.3;
+    const wrist={x:elbow.x+Rl[2]*loLen, y:elbow.y+Rl[5]*loLen, z:elbow.z+Rl[8]*loLen};
+    const loC={x:(elbow.x+wrist.x)/2, y:(elbow.y+wrist.y)/2,z:(elbow.z+wrist.z)/2};
+    drawBox(loC,Rl,[0.26,0.26,loLen/2],'#a39d90');
+
+    // wrist joint
+    drawBox(wrist,Rl,[0.30,0.30,0.30],'#6c6a6e');
+    // head (gripper): small box forward
+    const headTilt=rotZ(0.3);
+    const Rh=mul(Rl,headTilt);
+    const head={x:wrist.x+Rh[2]*0.8, y:wrist.y+Rh[5]*0.8, z:wrist.z+Rh[8]*0.8};
+    drawBox(head,Rh,[0.2,0.32,0.42],'#2f2f33');
+
+    // handset / phone
+    const hx=head.x+Rh[2]*0.5, hy=head.y+Rh[5]*0.5, hz=head.z+Rh[8]*0.5;
+    drawBox({x:hx,y:hy,z:hz},Rh,[0.12,0.1,0.22],'#141416');
+
+    // glowing lens
+    const lp=proj({x:hx+Rh[2]*0.1,y:hy+Rh[5]*0.1,z:hz+Rh[8]*0.1});
+    if(lp.ok){
+      const r=16+Math.sin(time*2)*2;
+      ctx.save();
+      ctx.shadowBlur=22;ctx.shadowColor='rgba(47,107,255,.9)';
+      const grad=ctx.createRadialGradient(lp.x,lp.y,1,lp.x,lp.y,r);
+      grad.addColorStop(0,'#bfd4ff');grad.addColorStop(.4,'#2f6bff');grad.addColorStop(1,'rgba(47,107,255,0)');
+      ctx.fillStyle=grad;ctx.beginPath();ctx.arc(lp.x,lp.y,r,0,7);ctx.fill();
+      ctx.shadowBlur=0;ctx.restore();
+      // rings
+      for(let i=0;i<3;i++){
+        const ph=(time*1.2+i/3)%1;
+        const rr=20+ph*90;
+        ctx.strokeStyle=`rgba(47,107,255,${(1-ph)*.6})`;
+        ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(lp.x,lp.y,rr,0,7);ctx.stroke();
+      }
+    }
+    return {shoulderCenter,elbow,wrist,head};
+  }
+
+  function orbitLerp(targetY,targetP){
+    const dY=targetY-yawC,dP=targetP-pitchC;
+    if(dY>3)yawC+=dY*0.05;else yawC+=dY*0.08;
+    pitchC+=dP*0.06;
+  }
+
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    mEye();
+    drawFloor();
+    const k=drawArm();
+    // hud anchors
+    updateHUD(k);
+  }
+
+  function updateHUD(k){
+    const pts={shoulder:proj(k.shoulderCenter),head:proj(k.wrist),base:proj({x:0,y:0.1,z:0})};
+    const els={shoulder:$('#hud-shoulder'),head:$('#hud-head'),base:$('#hud-base')};
+    els.shoulder.style.display=pts.shoulder.ok?'block':'none';
+    els.head.style.display=pts.head.ok?'block':'none';
+    els.base.style.display=pts.base.ok?'block':'none';
+    if(pts.shoulder.ok)els.shoulder.style.transform=`translate(${pts.shoulder.x}px,${pts.shoulder.y}px)`;
+    if(pts.head.ok)els.head.style.transform=`translate(${pts.head.x}px,${pts.head.y}px)`;
+    if(pts.base.ok)els.base.style.transform=`translate(${pts.base.x}px,${pts.base.y}px)`;
+  }
+  function hudClock(){const d=new Date();$('#hud-clock').textContent=d.toTimeString().slice(0,8)}
+  setInterval(hudClock,1000);hudClock();
+
+  let dragging=false;
+  cv.parentElement.addEventListener('mousemove',e=>{
+    const r=cv.parentElement.getBoundingClientRect();
+    const nx=((e.clientX-r.left)/r.width)-0.5;
+    const ny=((e.clientY-r.top)/r.height)-0.5;
+    orbitLerp(0.5+nx*1.1,0.30-ny*0.5);
+    if(!cv.parentElement.classList.contains('hovered'))cv.parentElement.classList.add('hovered');
+  });
+  cv.parentElement.addEventListener('mouseleave',()=>{cv.parentElement.classList.remove('hovered')});
+
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function loop(){
+    time+=0.016;
+    render();
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  return {get time(){return time}};
+})();
+
+/* ════════════════════════════════ RENDER LANDING ════════════════════════════════ */
+function bootLanding(){
+  // marquee
+  const mw=['national sanitation','apex drain','city inspect','foodsafe','grillworks','loll designs','metro kitchen','dockside diner'];
+  $('#marquee').innerHTML=(mw.map(x=>`<span><b>${x.toUpperCase()}</b></span>`).join(''))+(mw.map(x=>`<span><b>${x.toUpperCase()}</b></span>`).join(''));
+
+  // board path
+  const states=STATES_DEF;
+  $('#landing-path').innerHTML=states.map((s,i)=>{
+    const cls=CASES&&primaryCase()&&STATES_DEF.map(x=>x.state).indexOf(primaryCase().state)>=i?((i===STATES_DEF.map(x=>x.state).indexOf(primaryCase().state)&&primaryCase().state!=='REOPENING_PATH_ACTIVE')?'now':'done'):'future';
+    return `<div class="node ${cls} ${primaryCase()&&STATES_DEF.map(x=>x.state).indexOf(primaryCase().state)===i?cls:''}">
+      <span class="n">step 0${i+1}</span>
+      <div class="t">${s.label}</div>
+      <div class="d">${s.desc}</div>
+      <div class="ev">${s.ev}</div>
+    </div>`;
+  }).join('');
+
+  // attacks
+  const atks=[
+    {kind:'re',q:'“Sounds like the grease trap.”',code:'BLOCKER_UNCONFIRMED',desc:'Vague observation — no named violation, no requirement.',v:'REJECTED'},
+    {kind:'re',q:'“We\'ll try to get someone out this afternoon.”',code:'PROVIDER_HEDGED',desc:'A hedge is not a commitment. No clock time, no bookable fix.',v:'REJECTED'},
+    {kind:'re',q:'“Health department approved reinspection.” — agent',code:'PROOF_NOT_TRUSTED',desc:'An agent claim is not an authority record ever.',v:'REJECTED'},
+    {kind:'ok',q:'“Yes — grease-trap service at 4:30 PM today, we commit.”',code:'EXPLICIT + CLOCK',desc:'Explicit action, date, time, actor. Board moves.',v:'ACCEPTED'}
+  ];
+  $('#landing-attacks').innerHTML=atks.map((a,i)=>`
+    <div class="atk ${a.kind==='ok'?'ok':'re'}" style="transition-delay:${i*.07}s">
+      <span class="badge ${a.kind==='ok'?'ok':'re'}">${a.v}</span>
+      <div class="verdict">CONTRACTOR → ${a.v}</div>
+      <div class="q">${a.q}</div>
+      <span class="code">${a.code}</span>
+      <div class="desc">${a.desc}</div>
+    </div>`).join('');
+
+  const stats=STATE||{};
+  $('#stat-cases').textContent=stats.cases??'–';
+  $('#stat-trans').textContent=stats.transitions??'–';
+  $('#stat-conf').textContent=stats.avg_confidence?`${Math.round(stats.avg_confidence*100)}%`:'–';
+  $('#stat-chain').textContent=stats.transitions??'–';
+  $('#s-cases').textContent=stats.cases??'–';
+  $('#s-tests').textContent=stats.tests??73;
+  $('#s-mut').textContent=stats.mutations_evaluated??5000;
+  $('#s-viol').textContent=stats.mutations_violations??0;
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
-boot();
+
+/* ════════════════════════════════ RENDER DEMO ════════════════════════════════ */
+const STATES_DEF=[
+  {state:'CLOSED',label:'Closed',desc:'Health inspection failure stops operations',ev:'no evidence yet'},
+  {state:'BLOCKER_IDENTIFIED',label:'Blocker Identified',desc:'Violation named by the authority',ev:'authority requirement'},
+  {state:'REMEDIATION_BOOKED',label:'Remediation Booked',desc:'Provider commits to a fix window',ev:'provider commitment'},
+  {state:'REINSPECTION_REQUESTED',label:'Reinspection Requested',desc:'Authority accepts the reinspection path',ev:'reinspection path'},
+  {state:'REOPENING_PATH_ACTIVE',label:'Reopening Path Active',desc:"Waiting on the authority's physical reinspection",ev:'dated authority confirmation'}
+];
+const NEXT_GOALS={
+  'CLOSED':['Call the health department','Identify the blocking violation','Explicit violation + requirement'],
+  'BLOCKER_IDENTIFIED':['Call the remediation provider','Book a provider for the blocker','Firm commitment + clock time'],
+  'REMEDIATION_BOOKED':['Call the health department','Request the reinspection process','Reinspection path confirmed'],
+  'REINSPECTION_REQUESTED':['Call the health department','Confirm reopening status + date','Dated reopening from trusted source'],
+  'REOPENING_PATH_ACTIVE':['Waiting on authority','No active call — physical reinspection pending','—']
+};
+
+function renderDemoBoard(){
+  const c=primaryCase();
+  if(!c){$('#demo-board').innerHTML='<div class="empty">No cases in the ledger.</div>';return}
+  const curIdx=STATES_DEF.findIndex(s=>s.state===c.state);
+  const board=$('#demo-board');
+  board.innerHTML=STATES_DEF.map((s,i)=>{
+    const done=i<curIdx||(i===curIdx&&s.state==='REOPENING_PATH_ACTIVE');
+    const now=i===curIdx&&!done;
+    return `<div class="cell ${done?'done':now?'now':''}" onclick="openDrawerFor(${i})">
+      <span class="ctag">${done?'evidenced':now?'in progress':'gated'}</span>
+      <div class="cidx">0${i+1}</div>
+      <div class="ct">${s.label}</div>
+      <div class="cs">${s.desc}</div>
+      ${done?'<span class="done-arrow">✓ verified · view evidence →</span>':''}
+    </div>`;
+  }).join('');
+  // case panel
+  $('#d-loc').textContent=c.location_name;
+  const state=document.getElementById('d-state');
+  const terminal=c.state==='REOPENING_PATH_ACTIVE';
+  state.className='state '+(terminal?'done':curIdx===0?'closed':'mid');
+  state.textContent=terminal?'REOPENING PATH ACTIVE':c.state.replace(/_/g,' ');
+  $('#d-blocker').innerHTML=c.blocker?`<b>${c.blocker}</b> — correct before reinspection`:mono('pending first call');
+  $('#d-why').innerHTML=c.why_stuck||mono('awaiting first move');
+  const na=NEXT_GOALS[c.state]||NEXT_GOALS['REOPENING_PATH_ACTIVE'];
+  $('#d-next').textContent=na[0];
+  $('#d-nextto').textContent='→ '+na[2];
+  $('#calle-label').textContent=CALLE.live?'CALL-E LIVE':'CALL-E SIMULATION';
+  const lt=$('#d-livetag');lt.className='live-tag'+(CALLE.live?'':' off');
+  lt.innerHTML=`<span class="dot"></span>${CALLE.live?'live calls enabled — CALLE_API_URL + KEY set':'live calls disabled — deterministic simulation'}`;
+  // log
+  const steps=c.steps||[];
+  $('#log-count').textContent=`${steps.length} call${steps.length!==1?'s':''}`;
+  $('#log-body').innerHTML=steps.length?steps.map((s,i)=>`
+    <div class="entry">
+      <div class="time">${new Date(s.at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</div>
+      <div><div class="who">${s.who||'—'} ${isLiveId(s.call_id)?'· LIVE':''}</div>
+        <div class="st">“${escapeHtml(s.statement)}”</div></div>
+      <div><span class="verdict ok">✓ move</span></div>
+    </div>`).join(''):'<div class="empty">No phone calls yet. This board has never been moved — run the first call.</div>';
+  // advance button
+  const btn=$('#advance-btn');
+  btn.disabled=terminal;
+  $('#advance-hint').textContent=terminal?'Case is in the authority\u2019s hands — no further action':'engine → CALL-E → gate → board';
+  renderMiniAttacks();
+}
+
+function renderMiniAttacks(){
+  const ms=[
+    {k:'re',q:'“probably the grease trap”',m:'BLOCKER_UNCONFIRMED'},
+    {k:'re',q:'“we should get to it soon”',m:'PROVIDER_HEDGED'},
+    {k:'re',q:'agent: “it can reopen”',m:'PROOF_NOT_TRUSTED'},
+    {k:'ok',q:'“4:30 PM today, we commit.”',m:'ACCEPTED — board moved'}
+  ];
+  $('#mini-attacks').innerHTML=ms.map(a=>`
+    <div class="ma ${a.k}"><span class="ic">${a.k==='ok'?'✓':'✕'}</span>
+    <div><div class="q">${a.q}</div><div class="meta"><b>${a.m}</b></div></div></div>`).join('');
+}
+
+async function runAdvance(){
+  const c=primaryCase();if(!c||c.state==='REOPENING_PATH_ACTIVE')return;
+  const btn=$('#advance-btn');btn.disabled=true;btn.textContent='● Calling…';
+  try{
+    const r=await fetch('/api/cases/'+c.id+'/advance',{method:'POST'});
+    const d=await r.json();
+    if(d.ok){
+      CASES=[d.case];
+      toast(d.case.advance.live?'LIVE CALL-E completed':'Simulated call cleared the gate','ok');
+    }else{
+      toast('Rejected: '+d.reason+' — board did not move','re');
+    }
+  }catch(e){toast('Network error','re')}
+  btn.disabled=false;btn.textContent='▶ Run the next call';
+  renderDemoBoard();
+}
+
+async function resetDemo(){
+  try{const r=await fetch('/api/cases');const fresh=(await r.json());CASES=fresh;}
+  catch(e){}
+  if(primaryCase()&&primaryCase().state!=='CLOSED'){
+    toast('Deck is already advanced — reseed with: python3 demo.py --db contractor.db','re');
+  }
+  renderDemoBoard();
+}
+
+/* ───────────── EVIDENCE DRAWER ───────────── */
+function openDrawerFor(idx){
+  const c=primaryCase();if(!c)return;
+  const target=STATES_DEF[idx].state;
+  const steps=c.steps||[];
+  const matches=steps.filter(s=>(s.to_state===target||s.from_state===target)&&s.to_state===target);
+  if(!matches.length){toast('This state hasn\u2019t been reached by evidence yet','re');return}
+  const step=matches[matches.length-1];
+  curStep=steps.indexOf(step);
+  renderDrawer();
+  $('#drawer').classList.add('open');
+}
+function closeDrawer(){$('#drawer').classList.remove('open')}
+function renderDrawer(){
+  const c=primaryCase();if(!c)return;
+  const steps=c.steps||[];
+  const step=steps[curStep];if(!step)return;
+  $('#drawer-title').innerHTML=`<span>${human(step.to_state)}</span><span style="color:var(--faint)"> · evidence</span>`;
+  $('#drawer-pills').innerHTML=steps.map((s,i)=>`<span class="tp ${i===curStep?'cur':''}" onclick="curStep=${i};renderDrawer()">${human(s.to_state)} <b style="color:inherit">${(s.confidence*100).toFixed(0)}%</b></span>`).join('');
+  $('#drawer-quote').textContent='“'+step.statement+'”';
+  const rows=[];
+  rows.push(['Call',step.who||'—']);
+  rows.push(['Date',fmtDT(step.at)]);
+  for(const[k,v]of Object.entries(step.structured||{})){
+    let val=typeof v==='object'?JSON.stringify(v).replace(/"/g,''):String(v);
+    if(k==='confidence')continue;
+    rows.push([human(k),val]);
+  }
+  rows.push(['Confidence','<span class="v conf">'+(step.confidence*100).toFixed(0)+'%</span>']);
+  rows.push(['Decision','<span class="decision-badge">✓ ACCEPTED</span>']);
+  rows.push(['Why',step.why||'Phone evidence passed the CONTRACTOR gate.']);
+  rows.push(['Call ID','<span class="mono">'+escapeHtml(step.call_id)+'</span>']);
+  rows.push(['Transition',human(step.from_state)+' → '+human(step.to_state)]);
+  $('#drawer-grid').innerHTML=rows.map(r=>`<div class="ev-row"><div class="k">${r[0]}</div><div class="v">${r[1]}</div></div>`).join('');
+  $('#drawer-chain').innerHTML=`
+    <div style="color:#8b8794">append-only · hash-linked · verified on every load</div>
+    <div class="chain">
+      <div><span style="color:#e3c37a">PREV</span> <span class="hash">${escapeHtml(step.previous_hash||'GENESIS')}</span></div>
+      <div style="color:#7d7880">→</div>
+      <div><span style="color:#7ee2a8">STEP</span> <span class="hash">${escapeHtml(step.step_hash)}</span></div>
+    </div>`;
+}
+
+/* ───────────── PROTOCOL ───────────── */
+function bootProtocol(){
+  const rs=[
+    ['BLOCKER_UNCONFIRMED','Vague or hedged observation of the violation','“surfaces the grease trap”'],
+    ['VIOLATION_UNSTRUCTURED','Call produced no structured violation/requirement','“you know, the thing”'],
+    ['PROVIDER_HEDGED','Provider hedged — not a firm commitment','“we’ll try to get to it”'],
+    ['UNSPECIFIED_FIX_TIME','Fix window has no clock time — not bookable','“sometime next week”'],
+    ['NO_EXPLICIT_COMMITMENT','No explicit yes/commit/will for the window','“should be fine”'],
+    ['PROOF_NOT_TRUSTED','Reopening needs a trusted authority source','“agent says it’s handled”'],
+    ['NO_DATED_REOPENING','Recovery is a date, not a promise','“we’ll see”'],
+    ['LOW_CONFIDENCE','Extraction confidence below threshold','“probably”']
+  ];
+  $('#reasons').innerHTML=rs.map(r=>`
+    <div class="reason-row"><span class="code">${r[0]}</span><span class="why">${r[1]} <span class="greek">${r[2]}</span></span></div>`).join('');
+}
+
+/* ───────────── TOAST / UTILS ───────────── */
+let toastTimer;
+function toast(msg,kind){
+  const t=$('#toast');t.textContent=msg;
+  t.className='toast '+(kind==='ok'?'ok':kind==='re'?'re':'');
+  requestAnimationFrame(()=>t.classList.add('show'));
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function fmtDT(iso){try{const d=new Date(iso);return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return iso}}
+
+/* ───────────── BOOT ───────────── */
+(async()=>{
+  await load();
+  bootLanding();
+  bootProtocol();
+  route();
+  // reveal on scroll
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');io.unobserve(e.target)}),{threshold:.12});
+  $$('.reveal').forEach(el=>io.observe(el));
+})();
 </script>
 </body>
 </html>

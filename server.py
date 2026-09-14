@@ -72,7 +72,7 @@ def stats_payload(db_path):
         "transitions_accepted": accepted,
         "avg_confidence": round(sum(confs) / len(confs), 3) if confs else 0,
         "ledger_chain_ok": str(chain_ok),
-        "tests": 69,
+        "tests": 73,
         "mutations_evaluated": 5000,
         "mutations_violations": 0,
     }
@@ -155,9 +155,13 @@ class Handler(BaseHTTPRequestHandler):
                 attacks = {"error": str(e)}
             self._send(json.dumps(attacks).encode(), "application/json")
         elif p == "/api/calle":
-            import os
+            from contractor.calle_adapter import calle_env
+            cfg = calle_env()
+            missing = [k for k, v in (("url", cfg["url"]), ("key", cfg["key"]),
+                                      ("phone", cfg["phone"])) if not v]
             self._send(json.dumps({
-                "live": bool(os.environ.get("CALLE_API_URL") and os.environ.get("CALLE_API_KEY")),
+                "live": not missing,
+                "missing": missing,
             }).encode(), "application/json")
         elif p == "/api/cases":
             ps = PassbackStore(self.db_path)
@@ -178,9 +182,9 @@ def main():
     ap.add_argument("--port", type=int, default=8080)
     args = ap.parse_args()
     Handler.db_path = args.db
-    import os
-    Handler.live_calle = bool(
-        os.environ.get("CALLE_API_URL") and os.environ.get("CALLE_API_KEY"))
+    from contractor.calle_adapter import calle_env
+    cfg = calle_env()
+    Handler.live_calle = bool(cfg["url"] and cfg["key"] and cfg["phone"])
     from contractor import Store
     s1 = Store(args.db); s1.conn.close()
     s2 = PassbackStore(args.db); s2.close()

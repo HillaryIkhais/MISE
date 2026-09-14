@@ -1,17 +1,50 @@
 """CALL-E adapter — CONTRACTOR's actuator.
 
-call_e_call(to, goal)  →  {call_id, status, to, goal, transcript, extracted, live}
+call_e_call(goal, to)  →  {call_id, status, to, goal, transcript, extracted, live}
 
-Live path: POSTs to CALLE_API_URL/calls when CALLE_API_URL + CALLE_API_KEY
-are set.  Falls back to deterministic simulation without credentials so the
-protocol, tests, and demo remain credible without live telephony.
+Live path: creates a call task at {CALLE_BASE_URL}/v1/calls (or
+CALLE_API_URL), polls until terminal, and normalizes the result into the
+case-ready contract.  Falls back to deterministic simulation when the
+credentials (or a destination phone) are absent so the protocol, tests, and
+demo remain credible without live telephony.
 """
 from __future__ import annotations
+import hashlib
 import json
 import os
+import time
 import uuid
+from pathlib import Path
 from urllib.request import Request, urlopen
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
+
+POLL_TIMEOUT_S = 120.0
+POLL_INTERVAL_S = 2.0
+
+
+def _load_dotenv():
+    """Tiny stdlib .env loader (repo-root first match wins, no override)."""
+    for path in (Path.cwd() / ".env", Path(__file__).resolve().parents[1] / ".env"):
+        try:
+            for raw in path.read_text().splitlines():
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                os.environ.setdefault(k.strip(), v.strip())
+            break
+        except OSError:
+            continue
+
+
+def calle_env() -> dict:
+    """Live CALL-E config from env + .env (url accepts both var names)."""
+    _load_dotenv()
+    url = (os.environ.get("CALLE_API_URL")
+           or os.environ.get("CALLE_BASE_URL") or "").rstrip("/")
+    key = os.environ.get("CALLE_API_KEY") or ""
+    phone = os.environ.get("CALLE_PHONE") or ""
+    return {"url": url, "key": key, "phone": phone}
 
 
 def _simulate(goal: str, to: str, **kw) -> dict:
@@ -21,14 +54,147 @@ def _simulate(goal: str, to: str, **kw) -> dict:
     return r
 
 
-def _normalize(raw: dict) -> dict:
-    """Coerce an arbitrary CALL-E response into the case-ready contract."""
-    call_id = raw.get("call_id") or raw.get("id") or f"calle_{uuid.uuid4().hex[:10]}"
-    transcript = raw.get("transcript") or raw.get("result") or raw.get("text") or ""
-    extracted = dict(raw.get("extracted") or raw.get("structured") or {})
-    extracted.setdefault("confidence", raw.get("confidence", 0.8))
-    return {"call_id": call_id, "status": raw.get("status", "completed"),
-            "transcript": transcript, "extracted": extracted, "live": True}
+def _schema_for(to: str, scenario: str) -> dict:
+    """JSON Schema for the extraction contract of the current transition.
+
+    Mirrors the fields verify_call() consumes in passback.py.
+    """
+    if to == "remediation_provider":
+        return {
+            "type": "object", "additionalProperties": False,
+            "required": ["service", "provider", "window"],
+            "properties": {
+                "service": {"type": "string",
+                            "description": "The service being booked, e.g. grease trap service."},
+                "provider": {"type": "string",
+                             "description": "Name of the provider who commits to the work."},
+                "window": {"type": "string",
+                           "description": "The exact fix window WITH a clock time, e.g. \"today at 4:30 PM\". Must include an hour:minute time."},
+            },
+        }
+    if scenario == "requirement":
+        return {
+            "type": "object", "additionalProperties": False,
+            "required": ["violation", "requirement"],
+            "properties": {
+                "violation": {"type": "string",
+                              "description": "The specific blocked violation named by the health department, e.g. grease trap."},
+                "requirement": {"type": "string",
+                                "description": "Exactly what the department requires to be corrected before reinspection."},
+            },
+        }
+    return {
+        "type": "object", "additionalProperties": False,
+        "required": ["reinspection", "reopening_date"],
+        "properties": {
+            "reinspection": {"type": "string",
+                             "description": "The reinspection path the health department confirmed."},
+            "reopening_date": {
+                "type": "object", "required": ["date"],
+                "properties": {
+                    "date": {"type": "string",
+                             "description": "The confirmed reopening date stated by the department."},
+                    "depends_on": {"type": "string"},
+                },
+            },
+        },
+    }
+
+
+def _task_text(goal: str, to: str) -> str:
+    party = "remediation provider" if to == "remediation_provider" else "health department"
+    return (f"Call the {party} for a restaurant that failed a health inspection. "
+            f"Your objective: {goal} Keep the call until the recipient gives a clear, "
+            f"verbatim answer, then end the call and report their exact words.")
+
+
+def _create_call(cfg: dict, task: str, schema: dict, idem: str) -> dict:
+    body = json.dumps({
+        "task": task,
+        "recipients": [{"phones": [cfg["phone"]], "region": "US", "locale": "en-US"}],
+        "result_schema": schema,
+        "metadata": {"product": "MISE", "module": "CONTRACTOR"},
+    }).encode()
+    req = Request(cfg["url"] + "/v1/calls", data=body, method="POST",
+                  headers={"Authorization": f"Bearer {cfg['key']}",
+                           "Content-Type": "application/json",
+                           "Idempotency-Key": idem})
+    with urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode())
+
+
+def _poll_call(cfg: dict, call_id: str) -> dict:
+    deadline = time.monotonic() + POLL_TIMEOUT_S
+    req = Request(cfg["url"] + f"/v1/calls/{call_id}",
+                  headers={"Authorization": f"Bearer {cfg['key']}"})
+    while time.monotonic() < deadline:
+        with urlopen(req, timeout=30) as resp:
+            task = json.loads(resp.read().decode())
+        if task.get("status") in ("completed", "failed", "canceled"):
+            return task
+        time.sleep(POLL_INTERVAL_S)
+    raise RuntimeError("CALL-E poll timed out")
+
+
+def _transcript_from(task: dict) -> str:
+    turns = []
+    for r in task.get("recipients") or []:
+        for a in r.get("attempts") or []:
+            for t in a.get("transcript_turns") or []:
+                if t.get("speaker") == "user" and t.get("text"):
+                    turns.append(t["text"])
+    if turns:
+        return " ".join(turns)
+    ev = task.get("evidence") or []
+    return " ".join(ev) if ev else ""
+
+
+def _normalize(task: dict, to: str, goal: str) -> dict:
+    """Coerce a terminal CALL-E call task into the case-ready contract."""
+    raw_id = task.get("id") or f"call_{uuid.uuid4().hex[:10]}"
+    structured = task.get("structured_result") or {}
+    conf_obj = task.get("completion_confidence") or {}
+    confidence = float(conf_obj.get("score")) if conf_obj.get("score") is not None else 0.8
+    configured = "confidence" in structured
+    if configured:
+        confidence = float(structured.pop("confidence"))
+    elif isinstance(structured, dict):
+        structured = dict(structured)
+    structured.setdefault("confidence", confidence)
+    return {"call_id": f"calle_{raw_id}", "status": task.get("status", "completed"),
+            "to": to, "goal": goal, "transcript": _transcript_from(task),
+            "extracted": structured, "live": True,
+            "task_completed": task.get("task_completed"),
+            "evidence": task.get("evidence") or []}
+
+
+def call_e_call(goal: str, to: str, **kw) -> dict:
+    """Single entry point for CALL-E in the MISE flow.
+
+    Matches simulate_phone(goal, to, **kw) signature so either can be
+    passed as a call_fn to PassbackCase.run_next().
+    """
+    cfg = calle_env()
+    if not cfg["url"] or not cfg["key"]:
+        return _simulate(goal, to, **kw)
+    if not cfg["phone"]:
+        fb = _simulate(goal, to, **kw)
+        fb["live_error"] = "CALLE_PHONE not set — live call not placed"
+        return fb
+    idem_src = f"{kw.get('case_id', '')}|{kw.get('from_state', '')}|{goal}"
+    idem = "mise_" + hashlib.sha256(idem_src.encode()).hexdigest()[:24]
+    task = _task_text(goal, to)
+    schema = _schema_for(to, kw.get("scenario", "auto"))
+    try:
+        created = _create_call(cfg, task, schema, idem)
+        call_id = created.get("id") or ""
+        task = _poll_call(cfg, call_id) if call_id else created
+        return _normalize(task, to, goal)
+    except (URLError, HTTPError, OSError) as exc:
+        # A failed live call is safer to flag than to pretend it didn't happen.
+        fb = _simulate(goal, to, **kw)
+        fb["live_error"] = str(exc)
+        return fb
 
 
 def simulate_call(supplier: str, prompt: str, scenario: str = "confirm",
@@ -75,34 +241,3 @@ def simulate_call(supplier: str, prompt: str, scenario: str = "confirm",
 
 def _iso(dt) -> str:
     return dt.isoformat()
-
-
-def call_e_call(goal: str, to: str, **kw) -> dict:
-    """Single entry point for CALL-E in the MISE flow.
-
-    Matches simulate_phone(goal, to, **kw) signature so either can be
-    passed as a call_fn to PassbackCase.run_next().
-    """
-    url = os.environ.get("CALLE_API_URL")
-    key = os.environ.get("CALLE_API_KEY")
-    if not url or not key:
-        return _simulate(goal, to, **kw)
-    try:
-        body = json.dumps({"to": to, "goal": goal, **kw}).encode()
-        req = Request(
-            url.rstrip("/") + "/calls",
-            data=body,
-            headers={"Authorization": f"Bearer {key}",
-                     "Content-Type": "application/json"},
-        )
-        with urlopen(req, timeout=30) as resp:
-            raw = json.loads(resp.read().decode())
-        result = _normalize(raw)
-        result["to"] = to
-        result["goal"] = goal
-        return result
-    except (URLError, Exception) as exc:
-        # A failed live call is safer to flag than to pretend it didn't happen.
-        fb = _simulate(goal, to, **kw)
-        fb["live_error"] = str(exc)
-        return fb
