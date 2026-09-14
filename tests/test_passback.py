@@ -13,7 +13,7 @@ from contractor.passback import (
 
 def full_recovery(store=None):
     store = store or PassbackStore()
-    case = PassbackCase(store, "loc_004", "Acme Industrial Supply")
+    case = PassbackCase(store, "loc_004", "Torque Precision")
     a = case.next_action()
     r = simulate_phone(a["goal"], a["to"])
     case.execute_next(r["transcript"], r["extracted"],

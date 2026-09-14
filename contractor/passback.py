@@ -469,17 +469,17 @@ def simulate_phone(goal: str, to: str, scenario: str = "auto", **kw) -> dict:
     dl = kw.get("deadline", "tomorrow by 2:00 PM")
     if to == "supplier":
         if scenario == "hedged":
-            transcript = (f"Supplier: We'll try to get them out tomorrow. "
+            transcript = (f"Torque Precision: We'll try to get them out tomorrow. "
                           "Not sure about the time though.")
             extracted = {"action": "ship", "quantity": 4, "unit": "units",
                          "window": None, "confidence": 0.45}
         elif scenario == "missing_window":
-            transcript = (f"Supplier: Yes, we have four units and we'll ship them. "
+            transcript = (f"Torque Precision: Yes, we have four units and we'll ship them. "
                           "Should be there soon.")
             extracted = {"action": "ship", "quantity": 4, "unit": "units",
                          "window": None, "confidence": 0.72}
         else:
-            transcript = (f"Supplier: Yes. We have four units in stock. "
+            transcript = (f"Torque Precision: Yes. We have four units in stock. "
                           f"We'll ship them today. They'll arrive {dl}. "
                           "PO-1842 confirmed.")
             extracted = {"action": "ship", "quantity": 4, "unit": "units",

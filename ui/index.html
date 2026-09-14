@@ -148,12 +148,11 @@ nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-con
 .atk:hover{transform:translateY(-4px)}
 .atk .badge{position:absolute;top:16px;right:16px;font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.08em;padding:4px 9px;border-radius:5px}
 .atk .badge.re{background:var(--red);color:#fff}
-.atk .badge.ok{background:var(--green);color:#fff}
 .atk .q{font-family:var(--serif);font-style:italic;font-size:16px;line-height:1.45;color:#3c3a35;margin:20px 0 12px;min-height:72px}
 .atk .code{font-family:var(--mono);font-size:10px;color:var(--ink);background:#eff0ea;border-radius:6px;padding:5px 9px;display:inline-block}
 .atk .desc{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.55}
 .atk .verdict{font-family:var(--mono);font-size:10px;font-weight:700;margin-bottom:8px}
-.atk.re .verdict{color:var(--red)}.atk.ok .verdict{color:var(--green)}
+.atk.re .verdict{color:var(--red)}
 
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:6px}
 .stat{background:var(--card);padding:34px 26px;text-align:center}
@@ -231,10 +230,10 @@ nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-con
 .mini-attacks{display:flex;flex-direction:column;gap:12px}
 .ma{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:14px 1fr;gap:12px;align-items:start}
 .ma .ic{font-family:var(--mono);font-weight:700;font-size:12px;padding-top:1px}
-.ma.re .ic{color:var(--red)}.ma.ok .ic{color:var(--green)}
+.ma.re .ic{color:var(--red)}
 .ma .q{font-family:var(--serif);font-style:italic;font-size:13px;color:#3c3a35;line-height:1.4}
 .ma .meta{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:5px;letter-spacing:.06em}
-.ma.re .meta b{color:var(--red)}.ma.ok .meta b{color:var(--green)}
+.ma.re .meta b{color:var(--red)}
 .advance-wrap{margin-bottom:26px;display:flex;align-items:center;gap:16px}
 .advance-wrap .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .advance-wrap .hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.05em}
@@ -244,7 +243,6 @@ nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-con
 .protocol-hero h1{font-family:var(--serif);font-weight:600;font-size:clamp(38px,4.6vw,64px);line-height:1.04;max-width:800px}
 .protocol-hero p{margin-top:18px;font-size:16px;color:#4a4841;max-width:560px;line-height:1.7}
 .code-card{background:#141519;border:1px solid #232429;border-radius:16px;padding:34px;margin-top:44px;font-family:var(--mono);font-size:12.5px;line-height:2;color:#dfe3e8;overflow-x:auto}
-.code-card .c{color:#8b8794}.code-card .k{color:#7aa2ff}.code-card .s{color:#e3c37a}.code-card .g{color:#7ee2a8}.code-card .r{color:#ff9a8b}
 .reasons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:36px}
 .reason-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:14px 4px;border-bottom:1px dashed var(--line);font-size:13px}
 .reason-row .code{font-family:var(--mono);font-weight:700;color:var(--red);white-space:nowrap}
@@ -469,7 +467,7 @@ verdict = verify_call(case.state, result)</pre>
         <div class="k">Incident</div>
         <div class="big" id="cp-title">INCIDENT #1842</div>
         <div class="state closed" id="cp-state">DELIVERY FAILED</div>
-        <div class="why" id="cp-why">4 replacement units required by tomorrow 2:00 PM. <b>Supplier: Acme Industrial Supply.</b></div>
+        <div class="why" id="cp-why">4 replacement units required by tomorrow 2:00 PM. <b>Supplier: Torque Precision.</b></div>
       </div>
       <div class="cp next" id="cp-next">
         <div class="k">NEXT ACTION</div>
@@ -510,25 +508,21 @@ verdict = verify_call(case.state, result)</pre>
       <p>MISE enforces a simple rule: no phone statement moves the case unless it clears a gate. The gate checks what was said, what was extracted, and whether the evidence is sufficient.</p>
     </div>
     <div class="code-card">
-      <span class="c"># verify_call — the CONTRACTOR gate</span><br>
-      <span class="y">def</span> verify_call(state, transcript, structured, confidence, source):<br>
-      &nbsp;&nbsp;<span class="c"># 1. does the transcript contain a commitment?</span><br>
-      &nbsp;&nbsp;<span class="y">if</span> <span class="k">not</span> COMMITMENT_PATTERN.search(transcript):<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;<span class="r">return</span> rejected(<span class="s">"NO_EXPLICIT_COMMITMENT"</span>)<br>
+      <span style="color:#8b8794"># verify_call — the CONTRACTOR gate</span><br>
+      <span style="color:#e3c37a">def</span> verify_call(state, transcript, structured, confidence, source):<br>
+      &nbsp;&nbsp;<span style="color:#e3c37a">if</span> <span style="color:#7aa2ff">not</span> COMMITMENT_PATTERN.search(transcript):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ff9a8b">return</span> rejected(<span style="color:#e3c37a">"NO_EXPLICIT_COMMITMENT"</span>)<br>
       <br>
-      &nbsp;&nbsp;<span class="c"># 2. does the extracted data have a delivery window?</span><br>
-      &nbsp;&nbsp;<span class="y">if</span> <span class="k">not</span> structured.get(<span class="s">"window"</span>):<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;<span class="r">return</span> rejected(<span class="s">"DELIVERY_WINDOW_MISSING"</span>)<br>
+      &nbsp;&nbsp;<span style="color:#e3c37a">if</span> <span style="color:#7aa2ff">not</span> structured.get(<span style="color:#e3c37a">"window"</span>):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ff9a8b">return</span> rejected(<span style="color:#e3c37a">"DELIVERY_WINDOW_MISSING"</span>)<br>
       <br>
-      &nbsp;&nbsp;<span class="c"># 3. does the window include a clock time?</span><br>
-      &nbsp;&nbsp;<span class="y">if</span> <span class="k">not</span> CLOCK.search(structured[<span class="s">"window"</span>]):<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;<span class="r">return</span> rejected(<span class="s">"UNSPECIFIED_DELIVERY_TIME"</span>)<br>
+      &nbsp;&nbsp;<span style="color:#e3c37a">if</span> <span style="color:#7aa2ff">not</span> CLOCK.search(structured[<span style="color:#e3c37a">"window"</span>]):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ff9a8b">return</span> rejected(<span style="color:#e3c37a">"UNSPECIFIED_DELIVERY_TIME"</span>)<br>
       <br>
-      &nbsp;&nbsp;<span class="c"># 4. confidence threshold</span><br>
-      &nbsp;&nbsp;<span class="y">if</span> confidence < <span class="s">0.5</span>:<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;<span class="r">return</span> rejected(<span class="s">"LOW_CONFIDENCE"</span>)<br>
+      &nbsp;&nbsp;<span style="color:#e3c37a">if</span> confidence < <span style="color:#e3c37a">0.5</span>:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ff9a8b">return</span> rejected(<span style="color:#e3c37a">"LOW_CONFIDENCE"</span>)<br>
       <br>
-      &nbsp;&nbsp;<span class="g">return</span> accepted(to_state=<span class="s">"COMMITMENT_ACCEPTED"</span>)
+      &nbsp;&nbsp;<span style="color:#7ee2a8">return</span> accepted(to_state=<span style="color:#e3c37a">"COMMITMENT_ACCEPTED"</span>)
     </div>
     <h3 style="margin-top:48px;font-family:var(--serif);font-size:24px">Reject reasons</h3>
     <div class="reasons" id="reasons"></div>
@@ -575,14 +569,8 @@ const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
 /* ══════════════════ STATE ══════════════════ */
 let CASES=[], STATE=null, curStep=0;
 async function load(){
-  try{
-    const r=await fetch('/api/cases');
-    CASES=await r.json();
-  }catch(e){CASES=[]}
-  try{
-    const r2=await fetch('/api/stats');
-    STATE=await r2.json();
-  }catch(e){STATE={}}
+  try{const r=await fetch('/api/cases');CASES=await r.json();}catch(e){CASES=[]}
+  try{const r2=await fetch('/api/stats');STATE=await r2.json();}catch(e){STATE={}}
 }
 function primaryCase(){return CASES[0]||null}
 
@@ -605,45 +593,48 @@ function route(){
 }
 window.addEventListener('hashchange',route);
 
-/* ══════════════════ 3D CANVAS ══════════════════ */
-(function(){
-  const cv=$('#stage');if(!cv)return;
-  const ctx=cv.getContext('2d');
-  let W,H;
+/* ══════════════════ 3D ARM RENDERER ══════════════════ */
+const ARM=(()=>{
+  const cv=$('#stage'), ctx=cv.getContext('2d');
+  let W,H,DBL,DPR=Math.min(devicePixelRatio||1,2);
+  const T={x:0,y:2.2,z:0};
+  let yawC=0.5,pitchC=0.42,eye={x:0,y:0,z:0};
+  let time=0;
+
   function resize(){
     const r=cv.parentElement.getBoundingClientRect();
-    W=cv.width=r.width*devicePixelRatio;H=cv.height=r.height*devicePixelRatio;
-    cv.style.width=r.width+'px';cv.style.height=r.height+'px';
-    ctx.scale(devicePixelRatio,devicePixelRatio);
-    W=r.width;H=r.height;
+    W=r.width;H=r.height;DPR=Math.min(devicePixelRatio||1,2);
+    cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
   }
-  resize();window.addEventListener('resize',resize);
+  window.addEventListener('resize',resize);resize();
 
-  let time=0,yawC=0.55,pitchC=0.28;
-  const eye={x:0,y:4.2,z:7},T={x:0,y:0.6,z:0};
-  function mEye(){
-    const cy=Math.cos(yawC),sy=Math.sin(yawC),cp=Math.cos(pitchC),sp=Math.sin(pitchC);
-    eye.x=sy*cp*7;eye.y=sp*7+1.8;eye.z=cy*cp*7;
-    ctx.setTransform(1,0,0,1,0,0);
-  }
+  const mEye=()=>{const y=yawC,p=pitchC;eye={x:T.x+11*Math.sin(y)*Math.cos(p),y:T.y+11*Math.sin(p),z:T.z+11*Math.cos(y)*Math.cos(p)}};
   function proj(p){
     const dx=p.x-eye.x,dy=p.y-eye.y,dz=p.z-eye.z;
-    const yawC2=Math.atan2(-dx,dz),pitchC=Math.atan2(dy,Math.sqrt(dx*dx+dz*dz));
-    const cz=Math.cos(yawC2),sz=Math.sin(yawC2),cp=Math.cos(pitchC),sp=Math.sin(pitchC);
-    const fx=-Math.sin(yawC2)*Math.cos(pitchC),fy=Math.cos(yawC2)*Math.sin(pitchC),fz=-Math.cos(yawC2)*Math.cos(pitchC);
-    const rx=Math.cos(yawC2),rz=-Math.sin(yawC2);
-    const ux=Math.sin(yawC2)*Math.sin(pitchC),uy=Math.cos(pitchC),uz=-Math.cos(yawC2)*Math.sin(pitchC);
-    const cx2=dx*rx+dz*rz,cy2=dy*uy+(dx*ux+dz*uz),cz2=dx*fx+dy*fy+dz*fz;
+    const cz=Math.cos(yawC),sz=Math.sin(yawC),cp=Math.cos(pitchC),sp=Math.sin(pitchC);
+    const fx=-Math.sin(yawC)*Math.cos(pitchC), fy=Math.cos(yawC)*Math.sin(pitchC), fz=-Math.cos(yawC)*Math.cos(pitchC);
+    const rx=Math.cos(yawC), rz=-Math.sin(yawC);
+    const ux=Math.sin(yawC)*Math.sin(pitchC), uy=Math.cos(pitchC), uz=-Math.cos(yawC)*Math.sin(pitchC);
+    const cx2=dx*rx+dz*rz;
+    const cy2=dy*uy+(dx*ux+dz*uz);
+    const cz2=dx*fx+dy*fy+dz*fz;
     if(cz2<=0.1)return{ok:false};
     const f=W*0.85;
     return{x:W/2+cx2*f/cz2,y:H/2-cy2*f/cz2,z:cz2,ok:true};
   }
+
+  function mul(a,b){
+    const m=[0,0,0,0,0,0,0,0,0];
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++){let s=0;for(let k=0;k<3;k++)s+=a[i*3+k]*b[k*3+j];m[i*3+j]=s;}
+    return m;
+  }
   const rotY=t=>{const c=Math.cos(t),s=Math.sin(t);return[c,0,s,0,1,0,-s,0,c]};
   const rotZ=t=>{const c=Math.cos(t),s=Math.sin(t);return[c,-s,0,s,c,0,0,0,1]};
-  function mul(a,b){const m=[0,0,0,0,0,0,0,0,0];for(let i=0;i<3;i++)for(let j=0;j<3;j++){let s=0;for(let k=0;k<3;k++)s+=a[i*3+k]*b[k*3+j];m[i*3+j]=s;}return m;}
   function trans(m,p){return{x:m[0]*p.x+m[3]*p.y+m[6]*p.z,y:m[1]*p.x+m[4]*p.y+m[7]*p.z,z:m[2]*p.x+m[5]*p.y+m[8]*p.z}}
 
   const L={x:0.55,y:0.62,z:0.42};
+
   function drawBox(c,rt,hs,col,alpha=1){
     const corners=[];
     for(let i=0;i<8;i++){
@@ -657,12 +648,16 @@ window.addEventListener('hashchange',route);
     const draw=[];
     for(let f=0;f<6;f++){
       const n=normals[f];
-      const wn={x:rt[0]*n[0]+rt[3]*n[1]+rt[6]*n[2],y:rt[1]*n[0]+rt[4]*n[1]+rt[7]*n[2],z:rt[2]*n[0]+rt[5]*n[1]+rt[8]*n[2]};
-      const fc={x:c.x+n[0]*hs[0]*rt[0]+n[1]*hs[1]*rt[3]+n[2]*hs[2]*rt[6],y:c.y+n[0]*hs[0]*rt[1]+n[1]*hs[1]*rt[4]+n[2]*hs[2]*rt[7],z:c.z+n[0]*hs[0]*rt[2]+n[1]*hs[1]*rt[5]+n[2]*hs[2]*rt[8]};
+      const wn={x:rt[0]*n[0]+rt[3]*n[1]+rt[6]*n[2],
+                y:rt[1]*n[0]+rt[4]*n[1]+rt[7]*n[2],
+                z:rt[2]*n[0]+rt[5]*n[1]+rt[8]*n[2]};
+      const fc={x:c.x+n[0]*hs[0]*rt[0]+n[1]*hs[1]*rt[3]+n[2]*hs[2]*rt[6],
+                y:c.y+n[0]*hs[0]*rt[1]+n[1]*hs[1]*rt[4]+n[2]*hs[2]*rt[7],
+                z:c.z+n[0]*hs[0]*rt[2]+n[1]*hs[1]*rt[5]+n[2]*hs[2]*rt[8]};
       const view=proj(fc);
       if(!view.ok)continue;
       const dot0=wn.x*(fc.x-eye.x)+wn.y*(fc.y-eye.y)+wn.z*(fc.z-eye.z);
-      if(dot0<0)continue;
+      if(dot0<0) continue;
       const dif=Math.max(0,wn.x*L.x+wn.y*L.y+wn.z*L.z);
       const shd=(0.28+0.72*dif)*(1-0.06*(view.z/20));
       const pts=faceMap[f].map(pi=>proj(corners[pi]));
@@ -689,6 +684,7 @@ window.addEventListener('hashchange',route);
     r=Math.min(255,Math.round(r*f+(255-r)*0.04));g=Math.min(255,Math.round(g*f+(255-g)*0.04));b=Math.min(255,Math.round(b*f+(255-b)*0.04));
     const out=`rgb(${r},${g},${b})`;_shadeCache[key]=out;return out;
   }
+
   function drawFloor(){
     ctx.save();
     const g=ctx.createRadialGradient(W/2,H*0.72,10,W/2,H*0.74,W*0.44);
@@ -703,23 +699,45 @@ window.addEventListener('hashchange',route);
     }
     ctx.restore();
   }
+
   function drawArm(){
-    const Rh=mul(rotZ(0.12),rotY(Math.sin(time*0.3)*0.15));
-    const base={x:0,y:0.1,z:0};
-    const shoulder={x:0,y:0.6,z:0};
-    const shoulderCenter=trans(Rh,shoulder);
-    const Re=mul(Rh,rotY(-0.3+Math.sin(time*0.5)*0.2));
-    const elbow=trans(Re,{x:0,y:0.8,z:0});
-    const Rw=mul(Re,rotZ(0.2+Math.sin(time*0.7)*0.15));
-    const wrist=trans(Rw,{x:0,y:0.7,z:0});
-    const head=trans(Rw,{x:0,y:0.5,z:0});
-    drawBox(base,Rh,[0.22,0.12,0.22],'#a09882');
-    drawBox(shoulderCenter,Rh,[0.14,0.14,0.14],'#c6a96b');
-    drawBox(elbow,Re,[0.1,0.1,0.1],'#c6a96b');
-    drawBox(wrist,Rw,[0.08,0.08,0.08],'#c6a96b');
-    drawBox(head,Rw,[0.14,0.12,0.16],'#c6a96b');
-    const hx=head.x+Rh[2]*0.5,hy=head.y+Rh[5]*0.5,hz=head.z+Rh[8]*0.5;
+    const swayX=Math.sin(time*.9)*.14;
+    const swayY=Math.sin(time*.5)*.1+0.05;
+    const lift=Math.sin(time*.6)*.05;
+    const RY=rotY(swayY), RZ=rotZ(swayX);
+    const shoulder=mul(RY,RZ);
+
+    drawBox({x:0,y:1.55,z:0},[1,0,0,0,1,0,0,0,1],[0.75,1.55,0.75],'#3a3a3e');
+    drawBox({x:0,y:2.9,z:0},[1,0,0,0,1,0,0,0,1],[1.0,0.12,1.0],'#232326');
+
+    const shoulderCenter={x:0,y:3.15,z:0};
+    drawBox(shoulderCenter,shoulder,[0.42,0.42,0.42],'#5a5a60');
+
+    const upAng=-0.25+lift;
+    const RupZ=rotZ(upAng);
+    const Ru=mul(shoulder,RupZ);
+    const upLen=2.5;
+    const upC={x:Ru[6]*upLen/2, y:3.15+Ru[7]*upLen/2, z:Ru[8]*upLen/2};
+    drawBox(upC,Ru,[0.30,0.30,upLen/2],'#b9b3a6');
+
+    const elbow={x:shoulderCenter.x+Ru[2]*upLen, y:shoulderCenter.y+Ru[5]*upLen, z:shoulderCenter.z+Ru[8]*upLen};
+    const bend=0.2+Math.sin(time*1.1)*0.15;
+    const RlowZ=rotZ(bend);
+    const Rl=mul(Ru,RlowZ);
+    const loLen=2.3;
+    const wrist={x:elbow.x+Rl[2]*loLen, y:elbow.y+Rl[5]*loLen, z:elbow.z+Rl[8]*loLen};
+    const loC={x:(elbow.x+wrist.x)/2, y:(elbow.y+wrist.y)/2,z:(elbow.z+wrist.z)/2};
+    drawBox(loC,Rl,[0.26,0.26,loLen/2],'#a39d90');
+
+    drawBox(wrist,Rl,[0.30,0.30,0.30],'#6c6a6e');
+    const headTilt=rotZ(0.3);
+    const Rh=mul(Rl,headTilt);
+    const head={x:wrist.x+Rh[2]*0.8, y:wrist.y+Rh[5]*0.8, z:wrist.z+Rh[8]*0.8};
+    drawBox(head,Rh,[0.2,0.32,0.42],'#2f2f33');
+
+    const hx=head.x+Rh[2]*0.5, hy=head.y+Rh[5]*0.5, hz=head.z+Rh[8]*0.5;
     drawBox({x:hx,y:hy,z:hz},Rh,[0.12,0.1,0.22],'#141416');
+
     const lp=proj({x:hx+Rh[2]*0.1,y:hy+Rh[5]*0.1,z:hz+Rh[8]*0.1});
     if(lp.ok){
       const r=16+Math.sin(time*2)*2;
@@ -732,32 +750,44 @@ window.addEventListener('hashchange',route);
         ctx.strokeStyle=`rgba(47,107,255,${(1-ph)*.6})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(lp.x,lp.y,rr,0,7);ctx.stroke();
       }
     }
-    return{shoulderCenter,elbow,wrist,head};
+    return {shoulderCenter,elbow,wrist,head};
   }
-  function orbitLerp(tY,tP){yawC+=(tY-yawC)*0.06;pitchC+=(tP-pitchC)*0.06}
+
+  function orbitLerp(targetY,targetP){
+    const dY=targetY-yawC,dP=targetP-pitchC;
+    if(dY>3)yawC+=dY*0.05;else yawC+=dY*0.08;
+    pitchC+=dP*0.06;
+  }
+
   function render(){ctx.clearRect(0,0,W,H);mEye();drawFloor();const k=drawArm();updateHUD(k)}
+
   function updateHUD(k){
     const pts={shoulder:proj(k.shoulderCenter),head:proj(k.wrist),base:proj({x:0,y:0.1,z:0})};
     const els={shoulder:$('#hud-shoulder'),head:$('#hud-head'),base:$('#hud-base')};
-    for(const[key,el]of Object.entries(els)){
-      el.style.display=pts[key].ok?'block':'none';
-      if(pts[key].ok)el.style.transform=`translate(${pts[key].x}px,${pts[key].y}px)`;
-    }
+    els.shoulder.style.display=pts.shoulder.ok?'block':'none';
+    els.head.style.display=pts.head.ok?'block':'none';
+    els.base.style.display=pts.base.ok?'block':'none';
+    if(pts.shoulder.ok)els.shoulder.style.transform=`translate(${pts.shoulder.x}px,${pts.shoulder.y}px)`;
+    if(pts.head.ok)els.head.style.transform=`translate(${pts.head.x}px,${pts.head.y}px)`;
+    if(pts.base.ok)els.base.style.transform=`translate(${pts.base.x}px,${pts.base.y}px)`;
   }
-  function hudClock(){$('#hud-clock').textContent=new Date().toTimeString().slice(0,8)}
+  function hudClock(){const d=new Date();$('#hud-clock').textContent=d.toTimeString().slice(0,8)}
   setInterval(hudClock,1000);hudClock();
+
   cv.parentElement.addEventListener('mousemove',e=>{
     const r=cv.parentElement.getBoundingClientRect();
-    const nx=((e.clientX-r.left)/r.width)-0.5,ny=((e.clientY-r.top)/r.height)-0.5;
+    const nx=((e.clientX-r.left)/r.width)-0.5;
+    const ny=((e.clientY-r.top)/r.height)-0.5;
     orbitLerp(0.5+nx*1.1,0.30-ny*0.5);
   });
   function loop(){time+=0.016;render();requestAnimationFrame(loop)}
   loop();
+  return {get time(){return time}};
 })();
 
 /* ══════════════════ LANDING ══════════════════ */
 function bootLanding(){
-  const mw=['acme industrial','apex logistics','city supply','foodsafe','grillworks','metro kitchen','dockside parts','harbor supply'];
+  const mw=['torque precision','apex logistics','city supply','foodsafe','grillworks','metro kitchen','dockside parts','harbor supply'];
   $('#marquee').innerHTML=(mw.map(x=>`<span><b>${x.toUpperCase()}</b></span>`).join(''))+(mw.map(x=>`<span><b>${x.toUpperCase()}</b></span>`).join(''));
 
   const states=[
@@ -779,8 +809,8 @@ function bootLanding(){
     {kind:'re',q:'"Agent: delivery confirmed, case closed."',code:'PROOF_NOT_TRUSTED',desc:'An agent claim is not a supplier commitment. Ever.',v:'REJECTED'}
   ];
   $('#landing-attacks').innerHTML=atks.map((a,i)=>`
-    <div class="atk ${a.kind==='ok'?'ok':'re'}" style="transition-delay:${i*.07}s">
-      <span class="badge ${a.kind==='ok'?'ok':'re'}">${a.v}</span>
+    <div class="atk re" style="transition-delay:${i*.07}s">
+      <span class="badge re">${a.v}</span>
       <div class="verdict">CONTRACTOR → ${a.v}</div>
       <div class="q">${a.q}</div>
       <span class="code">${a.code}</span>
@@ -818,11 +848,9 @@ function renderDemoBoard(){
     </div>`;
   }).join('');
 
-  // case panel
   const stateCls=c.state==='DELIVERY_FAILED'?'closed':c.state==='RECOVERY_COMMITTED'?'done':'mid';
-  const stateLabel=c.state.replace(/_/g,' ');
   $('#cp-state').className='state '+stateCls;
-  $('#cp-state').textContent=stateLabel;
+  $('#cp-state').textContent=c.state.replace(/_/g,' ');
 
   const NEXT={
     'DELIVERY_FAILED':['Call the supplier','→ supplier'],
@@ -839,7 +867,6 @@ function renderDemoBoard(){
   advBtn.disabled=isTerminal;
   advBtn.textContent=isTerminal?'✓ Terminal':'▶ Run the next call';
 
-  // log
   const steps=c.steps||[];
   $('#log-count').textContent=`${steps.length} step${steps.length!==1?'s':''}`;
   if(steps.length){
@@ -853,7 +880,6 @@ function renderDemoBoard(){
     }).join('');
   }
 
-  // live pill
   try{
     fetch('/api/calle').then(r=>r.json()).then(d=>{
       if(d.live){$('#calle-pill').classList.add('live');$('#calle-pill-text').textContent='LIVE CALL-E'}
@@ -918,7 +944,7 @@ function renderDrawer(){
   rows.push(['Confidence','<span class="v conf">'+(step.confidence*100).toFixed(0)+'%</span>']);
   rows.push(['Decision','<span class="decision-badge">✓ ACCEPTED</span>']);
   rows.push(['Why',step.why||'Phone evidence passed the CONTRACTOR gate.']);
-  rows.push(['Call ID','<span class="mono" style="font-family:var(--mono);font-size:11px;word-break:break-all">'+escapeHtml(step.call_id)+'</span>']);
+  rows.push(['Call ID','<span style="font-family:var(--mono);font-size:11px;word-break:break-all">'+escapeHtml(step.call_id)+'</span>']);
   rows.push(['Transition',human(step.from_state)+' → '+human(step.to_state)]);
   $('#drawer-grid').innerHTML=rows.map(r=>`<div class="ev-row"><div class="k">${r[0]}</div><div class="v">${r[1]}</div></div>`).join('');
   $('#drawer-chain').innerHTML=`

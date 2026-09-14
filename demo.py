@@ -37,7 +37,7 @@ def board(state: str, title="BOARD"):
 def cold_open():
     banner("INCIDENT #1842 — DELIVERY FAILED")
     print("  4 replacement units required by tomorrow 2:00 PM.")
-    print("  Supplier: Acme Industrial Supply")
+    print("  Supplier: Torque Precision")
     why = pb.WHY_STUCK.get("DELIVERY_FAILED",
                             ["Supplier did not deliver. MISE must call "
                              "and extract a firm commitment."])
@@ -78,7 +78,7 @@ def main():
     # ------ seed-only mode (for server UI)
     if args.seed_only:
         ps.clear()
-        case = pb.PassbackCase(ps, "loc_004", "Acme Industrial Supply",
+        case = pb.PassbackCase(ps, "loc_004", "Torque Precision",
                                 call_fn=call_fn)
         banner("SEEDED")
         print(f"  DB: {args.db}")
@@ -89,7 +89,7 @@ def main():
 
     # ------ STEP 1 — call supplier (first attempt, hedged)
     banner("STEP 1 — ENGINE → CALL-E → SUPPLIER (first attempt)")
-    case = pb.PassbackCase(ps, "loc_004", "Acme Industrial Supply",
+    case = pb.PassbackCase(ps, "loc_004", "Torque Precision",
                             call_fn=call_fn)
     action = case.next_action()
     print(f"  MISE next action: {action['label']}")
@@ -203,6 +203,7 @@ def main():
 
     banner("MISE — Don't let 'maybe' become 'done.'")
     print("  INCIDENT #1842: 4 replacement units. Delivery failed.")
+    print("  Torque Precision is the supplier.")
     print("  MISE calls the supplier. Extracts the commitment.")
     print("  Tests whether it is actionable. Only then advances.\n")
     print("  CALL-E makes the calls.  MISE decides when the work")

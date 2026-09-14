@@ -198,8 +198,8 @@ def main():
     from contractor.passback import PassbackCase
     ps = PassbackStore(args.db)
     if not [c for c in ps.list_cases() if not c["location_id"].startswith("probe_")]:
-        PassbackCase(ps, "loc_004", "Acme Industrial Supply")
-        print("  Seeded INCIDENT #1842 — Acme Industrial Supply at DELIVERY FAILED")
+        PassbackCase(ps, "loc_004", "Torque Precision")
+        print("  Seeded INCIDENT #1842 — Torque Precision at DELIVERY FAILED")
     ps.close()
     srv = ReusableHTTPServer(("0.0.0.0", port), Handler)
     print(f"MISE dashboard: http://0.0.0.0:{port}  (db={args.db})")
