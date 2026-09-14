@@ -1,4 +1,4 @@
-"""PASSBACK — turns a failed inspection into a reopening path.
+"""PASSBACK — turns a blocked incident into a verified recovery.
 
 One product, two layers.
 
@@ -6,12 +6,15 @@ Layer 1 (Recovery Engine): decides what must happen next from the case state,
 and drives CALL-E to perform the phone action.
 
 Layer 2 (Evidence / Control): every state transition is backed by what the
-relevant human actually said on the phone — exact statement, exact
-requirement, contractor commitment, reinspection instruction, call id,
-timestamps, confidence, ambiguity, unresolved items. Append-only, hash-linked.
+relevant human actually said on the phone — exact statement, exact commitment,
+responsible party, delivery window, call id, timestamps, confidence,
+ambiguity, unresolved items. Append-only, hash-linked.
 
-The engine never decides whether the restaurant is compliant. It moves the
-case until the authority's own process reaches the next legitimate state.
+The engine never declares work complete. It moves the case only when the
+responsible party commits to a concrete, actionable plan.
+
+Fundamental primitive:
+  PHONE CALL → COMMITMENT → DECISION → STATE CHANGE
 
 Reusable primitive: verify_call(state, transcript, structured, confidence)
   → {"accepted": bool, "reasons": [code], "to_state": str, "step_type": str}
@@ -27,76 +30,60 @@ from .formation import HEDGES
 
 # Board: the visible operational state of a case.
 STATES = [
-    "CLOSED",
-    "BLOCKER_IDENTIFIED",
-    "REMEDIATION_BOOKED",
-    "REINSPECTION_REQUESTED",
-    "REOPENING_PATH_ACTIVE",
+    "DELIVERY_FAILED",
+    "SUPPLIER_CONTACT_REQUIRED",
+    "COMMITMENT_REJECTED",
+    "COMMITMENT_ACCEPTED",
+    "RECOVERY_COMMITTED",
 ]
 # Legal transitions — the case can never skip a step or roll back.
 TRANSITIONS = {
-    "CLOSED": ("BLOCKER_IDENTIFIED", "health_department_requirement"),
-    "BLOCKER_IDENTIFIED": ("REMEDIATION_BOOKED", "provider_commitment"),
-    "REMEDIATION_BOOKED": ("REINSPECTION_REQUESTED", "reinspection_requested"),
-    "REINSPECTION_REQUESTED": ("REOPENING_PATH_ACTIVE", "reopening_confirmed"),
+    "DELIVERY_FAILED": ("SUPPLIER_CONTACT_REQUIRED", "supplier_commitment"),
+    "SUPPLIER_CONTACT_REQUIRED": ("COMMITMENT_ACCEPTED", "supplier_commitment"),
+    "COMMITMENT_REJECTED": ("SUPPLIER_CONTACT_REQUIRED", "supplier_commitment"),
 }
 TO_LABEL = {
-    "health_department": "Health Department",
-    "remediation_provider": "Remediation Provider",
+    "supplier": "Supplier",
+    "operations": "Operations",
 }
 STEP_ACTOR = {
-    "health_department_requirement": "health_department",
-    "provider_commitment": "remediation_provider",
-    "reinspection_requested": "health_department",
-    "reopening_confirmed": "health_department",
+    "supplier_commitment": "supplier",
 }
 STEP_WHO = {
-    "health_department_requirement": "Health Department",
-    "provider_commitment": "Remediation Provider",
-    "reinspection_requested": "Health Department",
-    "reopening_confirmed": "Health Department",
+    "supplier_commitment": "Supplier",
 }
 STEP_WHY = {
-    "health_department_requirement": ("Explicit violation named and requirement "
-                                      "stated by the authority."),
-    "provider_commitment": ("Explicit service commitment with date, time, and "
-                            "responsible provider."),
-    "reinspection_requested": "Authority confirmed a reinspection path.",
-    "reopening_confirmed": "Trusted authority source plus dated reopening state.",
+    "supplier_commitment": ("Explicit commitment from the responsible party: "
+                            "action, quantity, delivery window, responsible party."),
 }
 
 # Gate reason codes — each maps to a one-line explanation.
 REJECT_REASONS = {
     "NO_STATEMENT": "no phone statement recorded for this transition",
-    "VIOLATION_UNSTRUCTURED": "health department call produced no structured "
-                              "violation or requirement",
     "LOW_CONFIDENCE": "extraction confidence below 0.5",
-    "BLOCKER_UNCONFIRMED": "blocker not confirmed — hedged or vague",
-    "NO_FIX_WINDOW": "provider gave no concrete fix window",
-    "UNSPECIFIED_FIX_TIME": "fix window has no clock time — not bookable",
-    "PROVIDER_HEDGED": "provider hedged — not a firm commitment",
-    "NO_EXPLICIT_COMMITMENT": "provider did not explicitly commit to the window",
-    "NO_REINSPECTION_PATH": "health department did not confirm a reinspection path",
-    "PROOF_NOT_TRUSTED": "reopening requires trusted proof; got untrusted source",
-    "NO_DATED_REOPENING": ("no dated reopening state — recovery is not a "
-                           "promise, it is a date"),
+    "SUPPLIER_HEDGED": "supplier hedged — not a firm commitment",
+    "DELIVERY_WINDOW_MISSING": "supplier gave no concrete delivery window",
+    "UNSPECIFIED_DELIVERY_TIME": "delivery window has no clock time — not bookable",
+    "NO_EXPLICIT_COMMITMENT": "supplier did not explicitly commit to the window",
 }
 
 WHY_STUCK = {
-    "CLOSED": ("Corrective action has not been confirmed.",
-               "Identify the blocking violation"),
-    "BLOCKER_IDENTIFIED": ("No authorized provider has committed to a fix window.",
-                           "Secure a remediation commitment"),
-    "REMEDIATION_BOOKED": ("The authority has not confirmed a reinspection path.",
-                           "Request the reinspection path"),
-    "REINSPECTION_REQUESTED": ("Reopening date is not yet confirmed by the authority.",
-                               "Confirm dated reopening with trusted source"),
-    "REOPENING_PATH_ACTIVE": ("Waiting on the authority's physical reinspection.",
-                               "No further action — case is in the authority's hands"),
+    "DELIVERY_FAILED": ("No responsible party has committed to a recovery plan.",
+                        "Call the supplier"),
+    "SUPPLIER_CONTACT_REQUIRED": ("The supplier has not committed to a "
+                                  "concrete delivery plan.",
+                                  "Establish a firm commitment"),
+    "COMMITMENT_REJECTED": ("Previous commitment was insufficient — hedged, "
+                            "missing deadline, or incomplete.",
+                            "Escalate to the supplier"),
+    "COMMITMENT_ACCEPTED": ("Valid commitment received. Waiting on delivery.",
+                            "Monitor delivery"),
+    "RECOVERY_COMMITTED": ("Commitment verified. Supplier is delivering.",
+                           "No further action — case is in the supplier's hands"),
 }
 
 CLOCK = re.compile(r"\d{1,2}:\d{2}")
-TRUSTED_PROOF_SOURCES = {"health_department", "provider_system", "inspection_portal"}
+TRUSTED_PROOF_SOURCES = {"supplier", "operations", "logistics_portal"}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS passback_cases (
@@ -180,47 +167,19 @@ def verify_call(state: str, transcript: str, structured: dict | None = None,
         _fail("NO_STATEMENT")
 
     try:
-        if step_type == "health_department_requirement":
-            if "violation" not in structured and "requirement" not in structured:
-                _fail("VIOLATION_UNSTRUCTURED")
-            if confidence < 0.5:
-                _fail("LOW_CONFIDENCE")
-            h = _hedged(transcript)
-            if h:
-                ambiguity.append({"field": "violation", "kind": "UNCERTAIN",
-                                  "detail": f"department hedged: '{h}'"})
-            if ambiguity:
-                _fail("BLOCKER_UNCONFIRMED")
-            unresolved.append({"item": "proof_of_service_not_yet_provided"})
-
-        if step_type == "provider_commitment":
+        if step_type == "supplier_commitment":
             window = structured.get("window") or structured.get("deadline")
             if not window:
-                _fail("NO_FIX_WINDOW")
+                _fail("DELIVERY_WINDOW_MISSING")
             if not CLOCK.search(str(window)):
-                _fail("UNSPECIFIED_FIX_TIME")
+                _fail("UNSPECIFIED_DELIVERY_TIME")
             h = _hedged(transcript)
             if h:
-                _fail("PROVIDER_HEDGED")
+                _fail("SUPPLIER_HEDGED")
             if not re.search(r"\b(yes|confirm|commit|will|can)\b", transcript.lower()):
                 _fail("NO_EXPLICIT_COMMITMENT")
             if confidence < 0.5:
                 _fail("LOW_CONFIDENCE")
-
-        if step_type == "reinspection_requested":
-            if not re.search(r"reinspect|re-inspect|reopen", transcript.lower()):
-                _fail("NO_REINSPECTION_PATH")
-            if confidence < 0.5:
-                _fail("LOW_CONFIDENCE")
-            unresolved.append({"item": "remediation_proof_pending"})
-
-        if step_type == "reopening_confirmed":
-            if source not in TRUSTED_PROOF_SOURCES:
-                _fail("PROOF_NOT_TRUSTED")
-            if not isinstance(structured.get("reopening_date"), dict):
-                _fail("NO_DATED_REOPENING")
-            if not structured["reopening_date"].get("date"):
-                _fail("NO_DATED_REOPENING")
     except _GateExit:
         pass
 
@@ -343,7 +302,7 @@ class PassbackCase:
         self.location_id = location_id
         self.location_name = location_name
         self.id = f"case_{uuid.uuid4().hex[:10]}"
-        self.state = "CLOSED"
+        self.state = STATES[0]
         self.opened_at = _now()
         self.updated_at = self.opened_at
         store.insert_case(self)
@@ -393,13 +352,8 @@ class PassbackCase:
         transcript = kw.pop("transcript", None)
         live = False
         if transcript is None:
-            # Engine chooses the CALL-E scenario: the first authority call must
-            # surface the blocking violation; later authority calls surface the
-            # reinspection path. Deterministic simulation mirrors this contract.
             if "scenario" not in kw:
-                kw["scenario"] = ("requirement"
-                                  if self.state == "CLOSED"
-                                  else "auto")
+                kw["scenario"] = "auto"
             kw.setdefault("case_id", self.id)
             kw.setdefault("from_state", self.state)
             result = self.call_fn(action["goal"], action["to"], **kw)
@@ -460,44 +414,46 @@ class PassbackError(ProtocolError):
 
 # --------------------------------------------------- next-action knowledge
 _next_actions = {
-    "CLOSED": {
-        "to": "health_department",
-        "label": "Call the health department",
-        "goal": ("Ask exactly what must be corrected before reinspection "
-                 "for this failed inspection."),
-        "question": "What specifically must be corrected before reinspection?",
+    "DELIVERY_FAILED": {
+        "to": "supplier",
+        "label": "Call the supplier",
+        "goal": ("A critical delivery has failed. Call the supplier to establish "
+                 "whether they can fulfill the order. Ask what they have in stock, "
+                 "when they can ship, and when it will arrive."),
+        "question": "Can you fulfill this order? What do you have, and when will it arrive?",
         "terminal": False,
     },
-    "BLOCKER_IDENTIFIED": {
-        "to": "remediation_provider",
-        "label": "Call the remediation provider",
-        "goal": ("An authorized service provider for the blocker is needed. "
-                 "Ask whether they can perform the required service and when."),
-        "question": "Can you perform the required service, and when will it be completed?",
+    "SUPPLIER_CONTACT_REQUIRED": {
+        "to": "supplier",
+        "label": "Call the supplier — establish commitment",
+        "goal": ("The supplier has not yet committed to a concrete delivery plan. "
+                 "Call again and extract: action, quantity, delivery window, "
+                 "responsible party. Accept only explicit commitments."),
+        "question": "What exactly will you ship, when, and who is responsible?",
         "terminal": False,
     },
-    "REMEDIATION_BOOKED": {
-        "to": "health_department",
-        "label": "Call the health department — reinspection path",
-        "goal": ("Corrective work is scheduled. Ask the health department "
-                 "for the earliest reinspection process."),
-        "question": ("The corrective work is scheduled for {window}. "
-                     "What is the earliest reinspection process?"),
+    "COMMITMENT_REJECTED": {
+        "to": "supplier",
+        "label": "Escalate to the supplier",
+        "goal": ("The previous commitment was insufficient — hedged, missing "
+                 "deadline, or incomplete. Escalate and demand a concrete plan: "
+                 "action, quantity, delivery window, responsible party."),
+        "question": "I need a firm commitment: what, how many, when, who is responsible?",
         "terminal": False,
     },
-    "REINSPECTION_REQUESTED": {
-        "to": "health_department",
-        "label": "Call the health department — remaining steps",
-        "goal": ("Reinspection is in motion. Confirm what remains before "
-                 "the location may reopen to produce the dated recovery state."),
-        "question": "What is the current reinspection status and reopening date?",
-        "terminal": False,
-    },
-    "REOPENING_PATH_ACTIVE": {
+    "COMMITMENT_ACCEPTED": {
         "to": None,
-        "label": "Waiting on authority — physical reinspection",
-        "goal": ("Recovery path is active. Remaining authority action: physical "
-                 "reinspection. MISE waits on the authority."),
+        "label": "Monitoring — delivery in progress",
+        "goal": ("Valid commitment received. The supplier is delivering. "
+                 "MISE monitors — no further phone action needed."),
+        "question": None,
+        "terminal": True,
+    },
+    "RECOVERY_COMMITTED": {
+        "to": None,
+        "label": "Recovery committed — monitoring",
+        "goal": ("Commitment verified. Supplier is delivering. "
+                 "MISE waits on delivery completion."),
         "question": None,
         "terminal": True,
     },
@@ -509,26 +465,31 @@ NEXT_ACTION = _next_actions
 # ------------------------------------------------------------ CALL-E scenarios
 def simulate_phone(goal: str, to: str, scenario: str = "auto", **kw) -> dict:
     """Offline CALL-E. In production PassbackCase.call_fn is the live
-    place_call hook (CALLE_API_URL / CALLE_API_KEY) — same contract."""
-    dl = kw.get("deadline", "today at 4:30 PM")
-    if to == "health_department":
-        if scenario == "requirement":
-            transcript = ("Health dept: the grease trap must be serviced by a "
-                          "licensed provider and proof of service made available "
-                          "before reinspection.")
-            extracted = {"violation": "grease_trap",
-                         "requirement": "service by licensed provider + proof of service"}
+    place_call hook (CALLE_BASE_URL / CALLE_API_KEY) — same contract."""
+    dl = kw.get("deadline", "tomorrow by 2:00 PM")
+    if to == "supplier":
+        if scenario == "hedged":
+            transcript = (f"Supplier: We'll try to get them out tomorrow. "
+                          "Not sure about the time though.")
+            extracted = {"action": "ship", "quantity": 4, "unit": "units",
+                         "window": None, "confidence": 0.45}
+        elif scenario == "missing_window":
+            transcript = (f"Supplier: Yes, we have four units and we'll ship them. "
+                          "Should be there soon.")
+            extracted = {"action": "ship", "quantity": 4, "unit": "units",
+                         "window": None, "confidence": 0.72}
         else:
-            transcript = ("Health dept: reinspection request accepted. Schedule for "
-                          "tomorrow morning; reopen date pending proof of service.")
-            extracted = {"reinspection": "tomorrow_morning",
-                         "reopening_date": {"date": "pending", "depends_on": "proof_of_service"}}
-    else:  # remediation_provider
-        transcript = (f"{kw.get('provider', 'Apex Drain & Grease Co.')}: Yes, "
-                      f"we can perform the grease trap service {dl}. I commit to that window.")
-        extracted = {"provider": kw.get("provider", "Apex Drain & Grease Co."),
-                     "window": dl, "service": "grease_trap_service"}
-    extracted["confidence"] = kw.get("confidence", 0.92)
+            transcript = (f"Supplier: Yes. We have four units in stock. "
+                          f"We'll ship them today. They'll arrive {dl}. "
+                          "PO-1842 confirmed.")
+            extracted = {"action": "ship", "quantity": 4, "unit": "units",
+                         "window": dl, "reference": "PO-1842", "confidence": 0.97}
+    else:  # operations
+        transcript = ("Operations: Incident #1842 — 4 replacement units, "
+                      f"delivery failed. Required by {dl}.")
+        extracted = {"incident": "delivery_failed", "requirement": "ship 4 units",
+                     "deadline": dl, "confidence": 0.95}
+    extracted["confidence"] = kw.get("confidence", extracted.get("confidence", 0.92))
     return {"call_id": f"call_{uuid.uuid4().hex[:10]}", "status": "completed",
             "to": to, "goal": goal, "transcript": transcript,
             "extracted": extracted, "simulated": True, "live": False}

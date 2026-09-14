@@ -59,51 +59,36 @@ def _schema_for(to: str, scenario: str) -> dict:
 
     Mirrors the fields verify_call() consumes in passback.py.
     """
-    if to == "remediation_provider":
+    if to == "supplier":
         return {
             "type": "object", "additionalProperties": False,
-            "required": ["service", "provider", "window"],
+            "required": ["action", "quantity", "window", "reference"],
             "properties": {
-                "service": {"type": "string",
-                            "description": "The service being booked, e.g. grease trap service."},
-                "provider": {"type": "string",
-                             "description": "Name of the provider who commits to the work."},
+                "action": {"type": "string",
+                           "description": "The action the supplier commits to, e.g. ship."},
+                "quantity": {"type": "integer",
+                             "description": "How many units."},
                 "window": {"type": "string",
-                           "description": "The exact fix window WITH a clock time, e.g. \"today at 4:30 PM\". Must include an hour:minute time."},
-            },
-        }
-    if scenario == "requirement":
-        return {
-            "type": "object", "additionalProperties": False,
-            "required": ["violation", "requirement"],
-            "properties": {
-                "violation": {"type": "string",
-                              "description": "The specific blocked violation named by the health department, e.g. grease trap."},
-                "requirement": {"type": "string",
-                                "description": "Exactly what the department requires to be corrected before reinspection."},
+                           "description": "The exact delivery window WITH a clock time, e.g. \"tomorrow before 2 PM\". Must include an hour:minute time or clear time-of-day."},
+                "reference": {"type": "string",
+                              "description": "Order or PO reference, e.g. PO-1842."},
             },
         }
     return {
         "type": "object", "additionalProperties": False,
-        "required": ["reinspection", "reopening_date"],
+        "required": ["incident", "requirement"],
         "properties": {
-            "reinspection": {"type": "string",
-                             "description": "The reinspection path the health department confirmed."},
-            "reopening_date": {
-                "type": "object", "required": ["date"],
-                "properties": {
-                    "date": {"type": "string",
-                             "description": "The confirmed reopening date stated by the department."},
-                    "depends_on": {"type": "string"},
-                },
-            },
+            "incident": {"type": "string",
+                         "description": "The type of incident, e.g. delivery_failed."},
+            "requirement": {"type": "string",
+                            "description": "What must happen to resolve the incident."},
         },
     }
 
 
 def _task_text(goal: str, to: str) -> str:
-    party = "remediation provider" if to == "remediation_provider" else "health department"
-    return (f"Call the {party} for a restaurant that failed a health inspection. "
+    party = "supplier" if to == "supplier" else "operations"
+    return (f"Call the {party} for a business with a critical delivery failure. "
             f"Your objective: {goal} Keep the call until the recipient gives a clear, "
             f"verbatim answer, then end the call and report their exact words.")
 

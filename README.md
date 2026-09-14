@@ -1,36 +1,28 @@
 # MISE
 
-### Get a closed restaurant back on the road to reopening.
+### Don't let 'maybe' become 'done.'
 
-A restaurant fails a health inspection and closes. **MISE coordinates the phone
-work required to move that case toward reopening**: identifying the blocker,
-securing remediation, and requesting reinspection. **CALL-E makes the calls;
-MISE decides what becomes true.**
+A critical supplier delivery fails. **MISE coordinates the phone work required to
+recover** — contacting the supplier, extracting a firm commitment, and only
+advancing the workflow when the commitment is explicit. **CALL-E makes the
+calls; MISE decides when the work is actually allowed to move.**
 
-> **A phone response does not automatically change the case.** Every transition
+> **A hedged "we'll try" is not permission to advance.** Every transition
 > requires sufficient evidence from the call. Vague observations, hedged
 > commitments, and unsupported agent claims are rejected.
 
-Not "inspection monitoring." Not "AI compliance." Not "call the inspector."
-A dashboard can't know what a human at a phone desk knows. A phone agent can
-ask — but only if something decides **what to ask next** and **when the answer
-is good enough to trust**. That's the product: a board that cannot be moved by
-words.
-
 ```
-FAILED INSPECTION
+DELIVERY FAILED
       ↓
-IDENTIFY THE BLOCKING VIOLATION   ← call the health department
+SUPPLIER CONTACT REQUIRED    ← call the supplier
       ↓
-BOOK THE REQUIRED REMEDIATION     ← call the authorized service provider (confirm the fix window)
+COMMITMENT ACCEPTED          ← explicit commitment: action, quantity, window, reference
       ↓
-REQUEST THE REINSPECTION PATH     ← call the health department again
-      ↓
-REOPENING PATH ACTIVE             ← dated confirmation from a trusted authority, not a promise
+RECOVERY COMMITTED           ← delivery in progress, monitored
 ```
 
-The board: `CLOSED → BLOCKER IDENTIFIED → REMEDIATION BOOKED → REINSPECTION
-REQUESTED → REOPENING PATH ACTIVE`.
+The board: `DELIVERY FAILED → SUPPLIER CONTACT REQUIRED → COMMITMENT ACCEPTED
+→ RECOVERY COMMITTED`.
 
 ---
 
@@ -38,12 +30,12 @@ REQUESTED → REOPENING PATH ACTIVE`.
 
 **Layer 1 — Move the case.** The recovery engine reads the case state and
 decides the one next phone action. CALL-E performs it. The first call's answer
-determines the second; the second determines what gets asked on the third.
+determines whether the board advances.
 
 ```
 MISE CASE
    ↓
-RECOVERY ENGINE        "next action: call health department"
+RECOVERY ENGINE        "next action: call supplier"
    ↓
 CALL-E                 real phone call
    ↓
@@ -57,9 +49,9 @@ BOARD
 ```
 
 **Layer 2 — Prove the move.** Every state transition is backed by what the
-relevant human *actually said* — exact statement, extracted commitment,
-date, confidence, call ID, timestamp, ambiguity, unresolved items.
-Append-only, hash-linked: the board can be *verified*, not just claimed.
+supplier *actually said* — exact statement, extracted commitment, delivery
+window, confidence, call ID, timestamp. Append-only, hash-linked: the board
+can be *verified*, not just claimed.
 
 ---
 
@@ -68,16 +60,12 @@ Append-only, hash-linked: the board can be *verified*, not just claimed.
 ```bash
 python3 demo.py --db contractor.db           # the recovery board, called and defended
 python3 server.py --db contractor.db         # dashboard at http://127.0.0.1:8080
-python3 -m unittest discover -s tests        # 73 tests, all green
+python3 -m unittest discover -s tests        # 19 tests, all green
 ```
 
 ---
 
 ## CALL-E, live
-
-The architecture is not "demo simulator → fake result → board." The engine
-calls CALL-E, CALL-E calls a real phone, the real result enters the evidence
-gate.
 
 Live mode activates when all three env vars are present (a tiny stdlib `.env`
 loader reads them automatically at startup):
@@ -91,17 +79,7 @@ CALLE_PHONE=+15551234567      # consented E.164 destination
 
 Without credentials the demo runs the same pipeline on a deterministic
 simulation — same protocol, same gate, same ledger — so judges can evaluate
-the full stack offline. The live path creates a call task at
-`POST {CALLE_BASE_URL}/v1/calls`, polls until terminal, and normalizes the
-result (`transcript`, `structured_result`, `completion_confidence`) into the
-case-ready contract that feeds `verify_call`. If the real call fails or times
-out, the adapter falls back to deterministic simulation with an explicit
-`live_error` flag — the demo continues, but the error is never silent.
-
-The **designated live transition** is `BLOCKER IDENTIFIED → REMEDIATION
-BOOKED`: one genuinely live, load-bearing call to the remediation provider.
-That one real moment proves the whole architecture; the deterministic backbone
-can carry the rest of the demo safely.
+the full stack offline.
 
 ---
 
@@ -122,60 +100,44 @@ verdict = verify_call(state, transcript, extracted, confidence, source)
 if verdict["accepted"]:
     case.advance(verdict)          # board moves, ledger appends
 else:
-    # reason codes: BLOCKER_UNCONFIRMED · PROVIDER_HEDGED
-    #               UNSPECIFIED_FIX_TIME · PROOF_NOT_TRUSTED · …
+    # reason codes: SUPPLIER_HEDGED · DELIVERY_WINDOW_MISSING
+    #               NO_EXPLICIT_COMMITMENT · PROOF_NOT_TRUSTED · …
 ```
 
-The three rejected paths, always visible:
+The rejected paths, always visible:
 
 ```
-"probably a grease trap"        → BLOCKER_UNCONFIRMED   board stays
-"we'll try to get to it soon"   → PROVIDER_HEDGED       board stays
-agent: "it can reopen"          → PROOF_NOT_TRUSTED     board stays
-"Yes, 4:30 PM today, we commit" → ACCEPTED              board moves
-```
-
-### SDK
-
-```python
-from contractor.passback import PassbackStore, PassbackCase
-
-store = PassbackStore("contractor.db")
-case  = PassbackCase(store, "loc_004", "Harbor Kitchen #04", call_fn=call_e_call)
-
-action = case.next_action()          # engine: what must happen next
-result = call_e_call(action["to"], action["goal"])   # CALL-E does the talking
-case.execute_next(result["transcript"], result["extracted"],
-                  result["extracted"]["confidence"], result["call_id"])
-#   board moved — or a PassbackError with the exact reason code
+"we'll try to get to it by 4:00 PM"  → SUPPLIER_HEDGED         board stays
+"we can probably ship"                → DELIVERY_WINDOW_MISSING  board stays
+agent: "delivery confirmed"           → PROOF_NOT_TRUSTED        board stays
+"Yes, 4 units, ship today, 2:00 PM"  → ACCEPTED                 board moves
 ```
 
 ---
 
-## The engine never declares compliance
+## The engine never declares delivery complete
 
-MISE **doesn't decide whether the restaurant is compliant** and never replaces
-the health department's decision. The final state is `REOPENING PATH ACTIVE` —
-reinspection requested, authority confirmation received, with the remaining
-authority action (physical reinspection) still in the department's hands.
-MISE coordinates reality; it doesn't pretend to be the authority.
+MISE **doesn't decide whether the delivery is complete** and never replaces
+the supplier's commitment. The final state is `COMMITMENT ACCEPTED` —
+recovery committed, delivery in progress, with the remaining delivery action
+still in the supplier's hands. MISE coordinates reality; it doesn't pretend
+to be the supplier.
 
 ## Under the hood
 
 MISE is the recovery product; its control layer is **CONTRACTOR**, the
 commitment protocol (invariant: *committed terms ⊆ mutually confirmed terms*).
-Tests: lifecycle matrix, attack corpus, 5,000-mutation property harness, and
-the MISE case-ledger suite. Docs: `PROTOCOL.md`, `THREAT_MODEL.md`,
-`ARCHITECTURE.md`, `SECURITY.md`.
+Tests: lifecycle matrix, attack corpus, mutation property harness, and
+the MISE case-ledger suite.
 
-## The 2:20 demo
+## The 2-minute demo
 
 | time | beat |
 | --- | --- |
-| 0:00–0:12 | **Cold open** — restaurant closed, red `CLOSED`, the blocker |
-| 0:12–0:30 | **Product** — five-state board, MISE coordinates phone work |
-| 0:30–0:55 | **First live CALL-E call** — engine → CALL-E → health department → board advances |
-| 0:55–1:15 | **Multi-party recovery** — provider commit, reinspection request |
-| 1:15–1:45 | **Attack lab** — vague / hedged / agent claim all REJECTED, real evidence ACCEPTED |
-| 1:45–2:05 | **Evidence** — click a transition: call, statement, commitment, call ID, integrity |
-| 2:05–2:20 | **Thesis** — board reaches `REOPENING PATH ACTIVE`, "CALL-E makes the calls. MISE decides what becomes true." |
+| 0:00–0:10 | **Cold open** — INCIDENT #1842, 4 units, delivery failed |
+| 0:10–0:25 | **Product** — four-state board, MISE coordinates supplier calls |
+| 0:25–0:45 | **First call** — supplier hedges, REJECTED, board stays |
+| 0:45–1:05 | **Attack lab** — hedged / missing deadline / agent claim all REJECTED |
+| 1:05–1:30 | **Escalation** — second call, firm commitment, ACCEPTED |
+| 1:30–1:50 | **Evidence** — click a transition: call, statement, commitment, call ID, integrity |
+| 1:50–2:00 | **Thesis** — "CALL-E makes the calls. MISE decides when the work is allowed to move." |
