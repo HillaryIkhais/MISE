@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Case } from "@/lib/types";
 import { fetchCases } from "@/lib/api";
-import { formatTime, formatTimeShort, humanize } from "@/lib/utils";
-import { Phone, CheckCircle2, Clock, ExternalLink } from "lucide-react";
+import { formatTime, humanize } from "@/lib/utils";
+import { Phone, CheckCircle2, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 export default function CallsPage() {
@@ -22,89 +22,79 @@ export default function CallsPage() {
     (c.steps || []).map((s) => ({ ...s, caseName: c.location_name, caseId: c.id }))
   );
 
+  const cols = "80px 1fr 1fr 100px 80px 100px 40px";
+
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="font-mono text-[10px] tracking-[0.25em] text-mise-muted uppercase mb-2">
+    <div style={{ padding: 32, maxWidth: 1280, margin: "0 auto" }}>
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "#7c7a72", textTransform: "uppercase", marginBottom: 8 }}>
           Calls
         </div>
-        <h1 className="text-2xl font-display font-semibold text-mise-ink">
+        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: "#e8e6e1" }}>
           CALL-E Interactions
         </h1>
-        <p className="text-sm text-mise-muted mt-1">
+        <p style={{ fontSize: 14, color: "#7c7a72", marginTop: 4 }}>
           Every outbound call made by MISE through CALL-E.
         </p>
       </div>
 
       {loading ? (
-        <div className="space-y-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-16 bg-mise-surface border border-mise-border rounded-xl animate-pulse"
-            />
+            <div key={i} style={{ height: 56, background: "#111114", border: "1px solid #232328", borderRadius: 14 }} />
           ))}
         </div>
       ) : allSteps.length === 0 ? (
-        <div className="border border-mise-border rounded-xl bg-mise-surface p-12 text-center">
-          <Phone className="w-8 h-8 text-mise-faint mx-auto mb-3" />
-          <p className="text-sm text-mise-muted">No calls yet.</p>
-          <p className="text-xs text-mise-faint mt-1">
+        <div style={{ border: "1px solid #232328", borderRadius: 14, background: "#111114", padding: 48, textAlign: "center" }}>
+          <Phone size={32} color="#4a4940" style={{ margin: "0 auto 12px" }} />
+          <p style={{ fontSize: 14, color: "#7c7a72" }}>No calls yet.</p>
+          <p style={{ fontSize: 12, color: "#4a4940", marginTop: 4 }}>
             Run the demo to place a call.
           </p>
         </div>
       ) : (
-        <div className="border border-mise-border rounded-xl overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-7 gap-4 px-5 py-3 bg-mise-surface border-b border-mise-border">
-            {["Call", "Incident", "Recipient", "Status", "Confidence", "Decision", ""].map(
-              (h) => (
-                <div
-                  key={h}
-                  className="font-mono text-[9px] tracking-wider text-mise-faint uppercase"
-                >
-                  {h}
-                </div>
-              )
-            )}
+        <div style={{ border: "1px solid #232328", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{ display: "grid", gridTemplateColumns: cols, gap: 16, padding: "12px 20px", background: "#111114", borderBottom: "1px solid #232328" }}>
+            {["Call", "Incident", "Recipient", "Status", "Confidence", "Decision", ""].map((h) => (
+              <div key={h} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.1em", color: "#4a4940", textTransform: "uppercase" }}>
+                {h}
+              </div>
+            ))}
           </div>
 
-          {/* Rows */}
-          {allSteps.map((step, i) => (
+          {allSteps.map((step) => (
             <div
               key={step.id}
-              className="grid grid-cols-7 gap-4 px-5 py-4 border-b border-mise-border last:border-0 hover:bg-mise-card/50 transition-colors"
+              style={{ display: "grid", gridTemplateColumns: cols, gap: 16, padding: "14px 20px", borderBottom: "1px solid #232328", transition: "background 0.15s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#161619")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <div className="font-mono text-xs text-mise-ink">
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#e8e6e1" }}>
                 {step.call_id.slice(0, 12)}
               </div>
-              <div className="text-xs text-mise-muted">
+              <div style={{ fontSize: 12, color: "#7c7a72" }}>
                 {step.caseName}
               </div>
-              <div className="text-xs text-mise-ink font-medium">
+              <div style={{ fontSize: 12, color: "#e8e6e1", fontWeight: 500 }}>
                 {step.who || "—"}
               </div>
               <div>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-mise-green/10 text-mise-green text-[10px] font-mono font-bold">
-                  <CheckCircle2 className="w-2.5 h-2.5" />
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 6, background: "rgba(22,163,74,0.1)", color: "#16a34a", fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800 }}>
+                  <CheckCircle2 size={10} />
                   COMPLETED
                 </span>
               </div>
-              <div className="font-mono text-xs text-mise-ink">
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#e8e6e1" }}>
                 {Math.round(step.confidence * 100)}%
               </div>
               <div>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-mise-green/10 text-mise-green text-[10px] font-mono font-bold">
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 6, background: "rgba(22,163,74,0.1)", color: "#16a34a", fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800 }}>
                   ACCEPTED
                 </span>
               </div>
               <div>
-                <Link
-                  href={`/demo/incident?id=${step.caseId}`}
-                  className="text-mise-blue hover:text-mise-blue/80 transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
+                <Link href={`/demo/incident?id=${step.caseId}`} style={{ color: "#2f6bff", textDecoration: "none" }}>
+                  <ExternalLink size={16} />
                 </Link>
               </div>
             </div>
