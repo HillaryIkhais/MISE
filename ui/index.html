@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MISE — Restaurant Recovery with Voice AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   MISE — the recovery board
+   Restaurant fails inspection → closes → MISE coordinates the phone
+   work toward reopening. No evidence, no state transition.
+   ══════════════════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#16181a;--card:#f4f3ef;--card2:#e8e7e3;
+  --accent:#2563eb;--green:#16a34a;--red:#dc2626;--amber:#d97706;
+  --text:#1a1a1a;--muted:#8a8780;--tan:#c8b8a8;--line:#deddd7;
+  --frame-r:28px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px;display:flex;justify-content:center}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(1000px 500px at 70% -10%,rgba(37,99,235,.06),transparent 60%),
+  radial-gradient(800px 400px at 10% 110%,rgba(200,184,168,.10),transparent 60%);pointer-events:none;z-index:0}
+
+.frame{width:100%;max-width:1320px;background:linear-gradient(180deg,#1d1f22,#121416);border-radius:var(--frame-r);padding:10px;position:relative;z-index:1;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.panel{background:var(--card);border-radius:20px;overflow:hidden;position:relative;min-height:86vh}
+.panel::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--accent),var(--amber));opacity:.9}
+
+/* ── NAV ── */
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 36px;position:relative;z-index:20}
+.nav-pill{font-size:9px;font-weight:700;letter-spacing:2px;color:#999;border:1px solid #d0d0c8;border-radius:20px;padding:6px 16px;text-transform:uppercase;background:rgba(255,255,255,.6)}
+.nav-brand{font-size:15px;font-weight:900;letter-spacing:5px}
+.nav-brand b{color:var(--accent)}
+.nav-menu{display:flex;flex-direction:column;gap:5px;cursor:pointer;padding:6px}
+.nav-menu i{display:block;width:24px;height:2px;background:var(--text);border-radius:1px}
+
+/* ── HERO ── */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:8px 24px;padding:6px 40px 0;position:relative;z-index:10}
+.hero-left h1{font-size:clamp(38px,4.6vw,62px);font-weight:900;line-height:1.02;letter-spacing:-2.5px}
+.hero-left h1 .soft{font-weight:300;color:var(--muted)}
+.hero-left .pipe{display:flex;align-items:center;gap:8px;margin:16px 0 4px;flex-wrap:wrap}
+.hero-left .pipe span{font-size:10px;font-weight:700;letter-spacing:1.5px;color:#fff;background:var(--text);padding:6px 12px;border-radius:16px;text-transform:uppercase}
+.hero-left .pipe i{color:#bbb;font-style:normal;font-size:12px}
+.hero-left .pipe span.done{background:var(--green)}
+.hero-left .pipe span.now{background:var(--accent)}
+.hero-left .pipe span.judge{background:var(--tan);color:var(--text)}
+.hero-right{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding-top:6px}
+.hero-right .dash{font-size:22px;font-weight:300;color:var(--muted);line-height:1.25}
+.hero-right .dash b{color:var(--text);font-weight:700}
+.book-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:24px;padding:12px 26px;font-size:11px;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:transform .2s,box-shadow .2s;text-transform:uppercase}
+.book-btn:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(37,99,235,.4)}
+.book-btn::after{content:'→';font-size:15px;transition:transform .2s}
+.book-btn:hover::after{transform:translateX(3px)}
+.hero-right .seed{font-size:10px;color:#b9b6ae;letter-spacing:.5px}
+
+/* ── CASE CARD ── */
+.case-card{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;margin:18px 40px 0;overflow:hidden;position:relative;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,.05)}
+.cc{background:var(--card2);padding:14px 16px;position:relative}
+.cc-label{font-size:8px;font-weight:800;letter-spacing:1.5px;color:#a39f96;text-transform:uppercase;margin-bottom:5px}
+.cc-val{font-size:13px;font-weight:700;line-height:1.35}
+.cc-val.mono{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+.cc-val.small{font-size:11px;font-weight:500;color:#555}
+.cc b.status{border-radius:14px;padding:8px 14px;font-size:11px;letter-spacing:1.5px;display:inline-block}
+.cc b.status.closed{background:var(--red);color:#fff}
+.cc b.status.path{background:var(--green);color:#fff}
+.cc b.status.active{background:var(--accent);color:#fff}
+
+/* ── 3D SCENE ── */
+.scene{perspective:1300px;height:330px;position:relative;margin:14px 40px 4px;z-index:5}
+.scene-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .08s ease-out;transform-origin:center 60%}
+.floor{position:absolute;bottom:16px;left:50%;transform:translateX(-50%) rotateX(70deg);width:340px;height:70px;background:radial-gradient(ellipse,rgba(0,0,0,.14) 0%,transparent 70%);border-radius:50%}
+
+.arm{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);width:200px;height:280px;transform-style:preserve-3d}
+.arm-base{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120px;height:38px;background:linear-gradient(180deg,#e4e3df,#c4c3bf);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.6)}
+.arm-base::after{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:4px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.06),transparent);border-radius:2px}
+.arm-pedestal{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:linear-gradient(180deg,#d9d8d4,#bcbcb8);border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 6px rgba(0,0,0,.08)}
+.joint{position:absolute;border-radius:50%;transform-style:preserve-3d}
+.joint::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.8),rgba(200,200,196,.4))}
+.joint-shoulder{bottom:80px;left:50%;transform:translateX(-50%);width:32px;height:32px;background:linear-gradient(135deg,#d0cfcb,#a8a8a4);box-shadow:0 2px 6px rgba(0,0,0,.1);z-index:3;animation:shoulder-sway 5s ease-in-out infinite alternate}
+.joint-shoulder::after{width:14px;height:14px}
+.arm-upper{position:absolute;bottom:96px;left:50%;transform-origin:bottom center;width:16px;height:90px;background:linear-gradient(180deg,#e6e5e1,#ccc);border-radius:8px;box-shadow:2px 0 8px rgba(0,0,0,.06);animation:upper-sway 5s ease-in-out infinite alternate;z-index:2}
+.arm-upper::before{content:'';position:absolute;top:20px;left:50%;transform:translateX(-50%);width:6px;height:100%;background:linear-gradient(180deg,rgba(0,0,0,.04),transparent);border-radius:3px}
+.joint-elbow{bottom:180px;left:calc(50% + 8px);transform:translateX(-50%);width:26px;height:26px;background:linear-gradient(135deg,#d8d7d3,#b0b0ac);box-shadow:0 2px 5px rgba(0,0,0,.08);z-index:3;animation:elbow-sway 5s ease-in-out infinite alternate .3s}
+.joint-elbow::after{width:12px;height:12px}
+.arm-lower{position:absolute;bottom:192px;left:calc(50% + 8px);transform-origin:bottom center;width:14px;height:80px;background:linear-gradient(180deg,#dfdfdb,#bcbcb8);border-radius:7px;box-shadow:2px 0 6px rgba(0,0,0,.05);animation:lower-sway 5s ease-in-out infinite alternate .3s;z-index:2}
+.joint-wrist{bottom:266px;left:calc(50% + 8px);transform:translateX(-50%);width:20px;height:20px;background:linear-gradient(135deg,#c8c7c3,#a0a09c);box-shadow:0 1px 4px rgba(0,0,0,.08);z-index:3;animation:wrist-sway 5s ease-in-out infinite alternate .15s}
+.joint-wrist::after{width:9px;height:9px}
+.arm-head{position:absolute;bottom:274px;left:calc(50% + 8px);transform:translateX(-50%);width:46px;height:38px;background:linear-gradient(180deg,#eae9e5,#d0cfcb);border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);animation:head-sway 5s ease-in-out infinite alternate .15s;z-index:4}
+.arm-head::before{content:'';position:absolute;top:10px;right:8px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#6ec6ff,var(--accent));box-shadow:0 0 8px rgba(37,99,235,.35)}
+.arm-head::after{content:'';position:absolute;top:14px;left:8px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#4ade80,var(--green));box-shadow:0 0 6px rgba(22,163,74,.35)}
+.phone{position:absolute;bottom:314px;left:calc(50% - 8px);width:22px;height:40px;background:linear-gradient(180deg,#2a2a2a,#1a1a1a);border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:5;animation:head-sway 5s ease-in-out infinite alternate .15s}
+.phone::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:12px;height:18px;background:linear-gradient(180deg,#3b82f6,#1d4ed8);border-radius:3px;box-shadow:0 0 6px rgba(37,99,235,.4)}
+.phone::after{content:'';position:absolute;top:3px;left:50%;transform:translateX(-50%);width:4px;height:2px;background:rgba(255,255,255,.6);border-radius:1px}
+.ring{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:white;z-index:6;animation:ring-pulse 1.5s ease-out infinite}
+.ring::before,.ring::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid rgba(255,255,255,.4);animation:ring-expand 1.5s ease-out infinite}
+.ring::before{width:20px;height:20px}
+.ring::after{width:36px;height:36px;animation-delay:.3s}
+
+@keyframes shoulder-sway{0%{transform:translateX(-50%) rotate(0deg)}100%{transform:translateX(-50%) rotate(3deg)}}
+@keyframes upper-sway{0%{transform:rotate(0deg)}100%{transform:rotate(-3deg)}}
+@keyframes elbow-sway{0%{transform:translateX(-50%) rotate(0deg)}100%{transform:translateX(-50%) rotate(4deg)}}
+@keyframes lower-sway{0%{transform:rotate(0deg)}100%{transform:rotate(-4deg)}}
+@keyframes wrist-sway{0%{transform:translateX(-50%) rotate(0deg)}100%{transform:translateX(-50%) rotate(2deg)}}
+@keyframes head-sway{0%{transform:translateX(-50%) rotate(0deg) translateY(0)}100%{transform:translateX(-50%) rotate(-1.5deg) translateY(-2px)}}
+@keyframes ring-pulse{0%{opacity:1}100%{opacity:0}}
+@keyframes ring-expand{0%{transform:translate(-50%,-50%) scale(.5);opacity:.8}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
+
+.callout{position:absolute;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:10px;z-index:10;box-shadow:0 6px 20px rgba(0,0,0,.08);animation:float-bob 5s ease-in-out infinite}
+@keyframes float-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.callout-left{top:14px;left:18px}
+.callout-left .cl-status{font-weight:800;color:var(--text);font-size:12px;letter-spacing:.5px}
+.callout-left .cl-mode{color:var(--muted);font-size:9px;letter-spacing:1.5px;margin-top:2px}
+.callout-left .cl-line{width:40px;height:1px;background:#d0d0c8;margin:8px 0}
+.callout-left .cl-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);font-weight:600}
+.callout-right{bottom:94px;right:20px;min-width:236px;animation-delay:1.2s;border-color:var(--tan);background:rgba(200,184,168,.16)}
+.callout-right::before{content:'';position:absolute;top:-1px;left:-1px;width:18px;height:18px;border-top:2px solid var(--tan);border-left:2px solid var(--tan);border-radius:5px 0 0 0}
+.callout-right::after{content:'';position:absolute;bottom:-1px;right:-1px;width:18px;height:18px;border-bottom:2px solid var(--tan);border-right:2px solid var(--tan);border-radius:0 0 5px 0}
+.cr-title{font-weight:800;color:var(--text);font-size:10px;letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase}
+.cr-line{font-family:'JetBrains Mono',monospace;font-size:9px;color:#6a675f;line-height:2;white-space:nowrap}
+.cr-line b{color:var(--text);font-weight:700}
+.cr-line .ok{color:var(--green);font-weight:700}
+.cr-line .block{color:var(--red);font-weight:700}
+
+/* ── BOARD ── */
+.board-section{padding:10px 40px 0;position:relative;z-index:10}
+.board{display:grid;grid-template-columns:repeat(5,1fr);background:var(--line);gap:1px;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.05)}
+.cell{background:var(--card);padding:16px 14px;cursor:pointer;transition:all .25s;position:relative;opacity:0;transform:translateY(20px) rotateX(8deg)}
+.cell.show{opacity:1;transform:translateY(0) rotateX(0deg)}
+.cell:hover{background:#fff}
+.cell.done{background:rgba(22,163,74,.05)}
+.cell.now{background:rgba(37,99,235,.06)}
+.cell.terminal.final{background:linear-gradient(135deg,rgba(22,163,74,.10),var(--card))}
+.cell-top{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.cell-dot{width:9px;height:9px;border-radius:50%;border:2px solid #cfccc4;background:transparent;transition:all .3s}
+.cell.done .cell-dot{border-color:var(--green);background:var(--green)}
+.cell.now .cell-dot{border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+.cell-num{font-size:8px;font-weight:800;color:#c5c2b9;letter-spacing:1px;font-family:'JetBrains Mono',monospace}
+.cell.done .cell-num{color:var(--green)}
+.cell.now .cell-num{color:var(--accent)}
+.cell-label{font-size:11px;font-weight:800;line-height:1.3}
+.cell-label small{display:block;font-weight:700;color:var(--muted);font-size:10px;margin-top:2px}
+.cell.done .cell-label{color:var(--green)}
+.cell.now .cell-label{color:var(--accent)}
+.cell-sub{font-size:9px;color:#b0aca2;margin-top:6px;line-height:1.4}
+.cell.done .cell-sub{color:var(--green);opacity:.7}
+.cell.now .cell-sub{color:var(--accent);opacity:.8}
+.cell .proof-tag{position:absolute;top:12px;right:10px;font-size:7px;font-weight:800;letter-spacing:1px;background:rgba(22,163,74,.12);color:var(--green);border-radius:8px;padding:2px 6px}
+.cell.future .proof-tag{background:rgba(0,0,0,.05);color:#b0aca2}
+
+/* ── ATTACK LAB ── */
+.attack-head{font-size:9px;font-weight:800;letter-spacing:2px;color:#a39f96;text-transform:uppercase;margin:22px 40px 10px;display:flex;align-items:center;gap:10px}
+.attack-head::before,.attack-head::after{content:'';flex:1;height:1px;background:var(--line)}
+.attacks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:0 40px;position:relative;z-index:10}
+.attack{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 15px;box-shadow:0 3px 10px rgba(0,0,0,.04);opacity:0;transform:translateY(16px);transition:all .5s}
+.attack.show{opacity:1;transform:translateY(0)}
+.attack .at-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.attack .at-tag{font-size:7px;font-weight:800;letter-spacing:1.5px;padding:3px 8px;border-radius:10px;text-transform:uppercase}
+.attack.block .at-tag{background:rgba(220,38,38,.1);color:var(--red)}
+.attack.ok .at-tag{background:rgba(22,163,74,.12);color:var(--green)}
+.attack .at-attack{font-size:11px;font-style:italic;color:var(--muted);min-height:30px;line-height:1.4}
+.attack .at-verdict{font-size:11px;font-weight:800;letter-spacing:.5px;margin:8px 0 4px}
+.attack.block .at-verdict{color:var(--red)}
+.attack.ok .at-verdict{color:var(--green)}
+.attack .at-code{font-family:'JetBrains Mono',monospace;font-size:9px;background:#f4f3ef;border-radius:4px;padding:2px 6px;display:inline-block;color:#555}
+.attack .at-desc{font-size:9px;color:#a6a29a;margin-top:7px;line-height:1.5}
+
+/* ── FOOTER ── */
+.footer{padding:22px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:relative;z-index:10;margin-top:18px}
+.footer-left{font-size:12px;font-weight:600}.footer-left em{font-style:normal;color:var(--muted)}
+.footer-trust{display:flex;flex-direction:column;align-items:center;gap:6px}
+.footer-trust-label{font-size:8px;font-weight:700;letter-spacing:2px;color:#b5b1a8;text-transform:uppercase}
+.footer-logos{display:flex;gap:22px;align-items:center}
+.footer-logos span{font-size:10px;font-weight:800;color:#aaa;letter-spacing:.5px;opacity:.65}
+.footer-logos span.b{opacity:1;color:#8a867e;font-weight:900}
+.footer-right{font-size:9px;color:#b5b1a8;letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ── EVIDENCE DRAWER ── */
+.drawer{position:fixed;inset:auto 0 0 0;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -6px 40px rgba(0,0,0,.18);padding:0 40px 34px;transform:translateY(105%);transition:transform .45s cubic-bezier(.4,0,.2,1);z-index:100;max-height:82vh;overflow-y:auto}
+.drawer.open{transform:translateY(0)}
+.drawer-handle{width:44px;height:4px;background:#ddd;border-radius:2px;margin:14px auto 6px;cursor:pointer}
+.drawer .d-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px;position:sticky;top:0;background:#fff;z-index:2}
+.drawer h2{font-size:16px;font-weight:900;letter-spacing:.5px}
+.drawer h2 .arrow{color:#adb0b8;font-family:'JetBrains Mono',monospace;font-weight:400;margin:0 6px}
+.drawer .d-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;color:#888;transition:all .2s}
+.drawer .d-close:hover{background:#f4f3ef;color:var(--text)}
+.d-grid{display:grid;grid-template-columns:260px 1fr;gap:24px}
+.d-call{display:flex;flex-direction:column;gap:14px}
+.d-call h4{font-size:9px;font-weight:800;letter-spacing:1.5px;color:#a39f96;text-transform:uppercase}
+.step-pill{display:flex;align-items:center;gap:9px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:all .2s;font-size:11px;font-weight:700}
+.step-pill:hover{border-color:#cfccc4;background:#fafaf8}
+.step-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.step-pill em{font-style:normal;color:#a6a29a;font-weight:500;margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px}
+.d-evidence h4{font-size:9px;font-weight:800;letter-spacing:1.5px;color:#a39f96;text-transform:uppercase;margin:4px 0 12px}
+.ev-quote{border-left:3px solid var(--green);padding:16px 18px;font-size:14px;line-height:1.7;color:#333;background:#fafaf8;border-radius:0 10px 10px 0;margin-bottom:18px;font-weight:500}
+.ev-rows{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px}
+.ev-row{border-bottom:1px dashed #ecebe5;padding-bottom:8px}
+.ev-row .k{font-size:9px;font-weight:700;letter-spacing:1px;color:#a39f96;text-transform:uppercase;margin-bottom:3px}
+.ev-row .v{font-size:12px;font-weight:600}
+.ev-row .v.conf{color:var(--green)}
+.ev-row .v.decision{color:var(--green);font-weight:800}
+.ev-row .v.callid{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;word-break:break-all}
+.ev-row .v.muted{color:#777;font-weight:500}
+.decision-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(22,163,74,.12);color:var(--green);font-weight:800;border-radius:14px;padding:8px 14px;font-size:12px;letter-spacing:1px}
+.integrity{margin-top:18px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.int-head{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:1px;background:#fafaf8}
+.int-head .ic{transition:transform .25s;color:#999;font-size:12px}
+.integrity.open .int-head .ic{transform:rotate(180deg)}
+.int-body{display:none;padding:10px 14px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#6a675f;line-height:1.9;background:#fdfdfc}
+.integrity.open .int-body{display:block}
+.int-body .chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+.int-body .h{font-size:9px;background:#f0efea;border-radius:4px;padding:2px 7px;word-break:break-all;max-width:280px}
+.int-body .prev{color:var(--amber)}
+.int-body .steph{color:var(--green)}
+
+/* ── STAGGER ── */
+@keyframes fade-up{0%{opacity:0;transform:translateY(24px)}100%{opacity:1;transform:translateY(0)}}
+.hero-left{animation:fade-up .8s ease-out both}
+.hero-right{animation:fade-up .8s ease-out .15s both}
+.case-card{animation:fade-up .65s ease-out .28s both}
+.scene{animation:fade-up .7s ease-out .38s both}
+.board-section{animation:fade-up .6s ease-out .55s both}
+.footer{animation:fade-up .6s ease-out .9s both}
+
+/* ── NO CASES ── */
+.no-cases{display:none;text-align:center;padding:80px 40px;color:var(--muted)}
+.no-cases code{background:#f0f0ec;padding:4px 10px;border-radius:6px;font-size:12px}
+
+/* ── REDUCED MOTION ── */
+@media(prefers-reduced-motion:reduce){
+  .arm-upper,.arm-lower,.joint-shoulder,.joint-elbow,.joint-wrist,.arm-head,.phone,.ring,.callout,.cell,.attack{animation:none!important;transition:none!important}
+  .cell,.attack{opacity:1!important;transform:none!important}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:14px}
+  .case-card,.board,.attacks{grid-template-columns:1fr 1fr}
+  .scene{height:250px;margin:14px 20px}
+  .d-grid{grid-template-columns:1fr}
+  .ev-rows{grid-template-columns:1fr}
+  .attacks{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="frame">
+<div class="panel">
+
+<nav>
+  <span class="nav-pill">We're hiring</span>
+  <span class="nav-brand">MI<b>SE</b></span>
+  <div class="nav-menu"><i></i><i></i><i></i></div>
+</nav>
+
+<div class="hero">
+  <div class="hero-left">
+    <h1>Get a closed<br>restaurant back on the<br><span class="soft">road to reopening.</span></h1>
+    <div class="pipe" id="pipe"></div>
+  </div>
+  <div class="hero-right">
+    <div class="dash">— Restaurant Recovery<br>with <b>Voice AI</b></div>
+    <button class="book-btn" onclick="document.querySelector('.board-section').scrollIntoView({behavior:'smooth'})">Book a demo</button>
+    <span class="seed">Harbor Kitchen #04 · failed inspection · case live</span>
+  </div>
+</div>
+
+<!-- CASE CARD -->
+<div class="case-card" id="case-card" style="display:none">
+  <div class="cc">
+    <div class="cc-label">Location</div>
+    <div class="cc-val" id="cc-location">—</div>
+  </div>
+  <div class="cc">
+    <div class="cc-label">Case status</div>
+    <div class="cc-val" id="cc-status">—</div>
+  </div>
+  <div class="cc">
+    <div class="cc-label">Blocker</div>
+    <div class="cc-val" id="cc-blocker">—</div>
+  </div>
+  <div class="cc">
+    <div class="cc-label">Why it hasn't moved</div>
+    <div class="cc-val small" id="cc-why">—</div>
+  </div>
+</div>
+
+<div class="case-card" id="na-card" style="display:none">
+  <div class="cc">
+    <div class="cc-label">MISE's next action</div>
+    <div class="cc-val mono" id="cc-next">—</div>
+  </div>
+  <div class="cc">
+    <div class="cc-label">CALL-E executes</div>
+    <div class="cc-val" id="cc-calle">—</div>
+  </div>
+  <div class="cc">
+    <div class="cc-label">CONTRACTOR gate</div>
+    <div class="cc-val mono" id="cc-gate">—</div>
+  </div>
+  <div class="cc">
+    <div class="cc-label">Evidence requirement</div>
+    <div class="cc-val small" id="cc-req">—</div>
+  </div>
+</div>
+
+<!-- 3D SCENE -->
+<div class="scene" id="scene">
+  <div class="scene-inner" id="tilt">
+    <div class="floor"></div>
+    <div class="arm">
+      <div class="arm-base"></div>
+      <div class="arm-pedestal"></div>
+      <div class="joint joint-shoulder"></div>
+      <div class="arm-upper"></div>
+      <div class="joint joint-elbow"></div>
+      <div class="arm-lower"></div>
+      <div class="joint joint-wrist"></div>
+      <div class="arm-head"></div>
+      <div class="phone"><div class="ring"></div></div>
+    </div>
+    <div class="callout callout-left" id="cl-left">
+      <div class="cl-status" id="cl-status">STATUS: —</div>
+      <div class="cl-mode">MODE: AUTONOMOUS</div>
+      <div class="cl-line"></div>
+      <div class="cl-time" id="cl-time">00:00:00</div>
+    </div>
+    <div class="callout callout-right" id="cl-right">
+      <div class="cr-title">Phone Evidence</div>
+      <div id="cr-lines"><div class="cr-line">Awaiting first call…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOARD -->
+<div class="board-section">
+  <div class="board" id="board"><div class="cell" style="opacity:1;transform:none;grid-column:1/-1;padding:16px;color:#999;font-size:12px">Loading recovery board…</div></div>
+</div>
+
+<!-- ATTACK LAB -->
+<div class="attack-head">The attack lab — proof the board does not move on words</div>
+<div class="attacks" id="attacks"></div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-left">CALL-E makes the calls. <em>MISE decides what becomes true.</em></div>
+  <div class="footer-trust">
+    <span class="footer-trust-label">Trusted by industry leaders</span>
+    <div class="footer-logos">
+      <span class="b">NATIONAL SANITATION</span><span>APEX DRAIN</span>
+      <span class="b">CITY INSPECT</span><span>foodsafe</span>
+      <span class="b">grillworks</span><span>loll designs</span>
+    </div>
+  </div>
+  <div class="footer-right"><span class="dot-live"></span> ENGINE LIVE · CONTRACTOR</div>
+</div>
+
+<div class="no-cases" id="no-cases">
+  <h2>No recovery cases</h2>
+  <code>python3 demo.py --db contractor.db</code>
+</div>
+
+</div><!-- panel -->
+</div><!-- frame -->
+
+<!-- EVIDENCE DRAWER -->
+<div class="drawer" id="drawer">
+  <div class="drawer-handle" onclick="closeDrawer()"></div>
+  <div class="d-top">
+    <h2 id="drawer-title">—</h2>
+    <button class="d-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="d-grid">
+    <div class="d-call">
+      <h4>Transition</h4>
+      <div id="drawer-pills"></div>
+    </div>
+    <div class="d-evidence">
+      <h4>Evidence — what actually moved the board</h4>
+      <div id="drawer-body"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATES=['CLOSED','BLOCKER_IDENTIFIED','REMEDIATION_BOOKED','REINSPECTION_REQUESTED','REOPENING_PATH_ACTIVE'];
+const LABELS=[
+  {t:'Closed',s:'Health inspection failure'},
+  {t:'Blocker Identified',s:'Violation named by authority'},
+  {t:'Remediation Booked',s:'Provider committed to fix window'},
+  {t:'Reinspection Requested',s:'Authority accepted path'},
+  {t:'Reopening Path Active',s:'Waiting on authority · physical reinspection'}
+];
+const REJECTS=['BLOCKER_UNCONFIRMED','PROVIDER_HEDGED','UNSPECIFIED_FIX_TIME','NO_FIX_WINDOW','PROOF_NOT_TRUSTED','NO_DATED_REOPENING','LOW_CONFIDENCE','VIOLATION_UNSTRUCTURED'];
+const REJECT_TEXT={
+  BLOCKER_UNCONFIRMED:'vague or hedged — not a confirmed blocker',
+  PROVIDER_HEDGED:'hedged — not a firm commitment',
+  UNSPECIFIED_FIX_TIME:'no clock time — not bookable',
+  NO_FIX_WINDOW:'no fix window at all',
+  PROOF_NOT_TRUSTED:'untrusted source — words are not proof',
+  NO_DATED_REOPENING:'recovery is a date, not a promise',
+  LOW_CONFIDENCE:'extraction confidence too low',
+  VIOLATION_UNSTRUCTURED:'violation not structured'
+};
+const NEXT_GOALS={
+  'CLOSED':['Call the health department','Call the health department to identify the blocking violation','Explicit violation + requirement','A named violation and the exact corrective requirement, in the authority\'s words.'],
+  'BLOCKER_IDENTIFIED':['Call the remediation provider','Book a licensed provider for the blocker','Firm commitment + clock time','An explicit service commitment with a concrete date and clock time.'],
+  'REMEDIATION_BOOKED':['Call the health department','Request the earliest reinspection process','Reinspection path confirmed','The authority confirms a reinspection path in its own words.'],
+  'REINSPECTION_REQUESTED':['Call the health department','Confirm reopening status and date','Dated reopening from trusted source','A dated reopening state from a trusted authority source.'],
+  'REOPENING_PATH_ACTIVE':['Waiting on authority','No active call — physical reinspection in the authority\'s hands','—','MISE does not declare compliance. The authority\'s next act moves this case.']
+};
+
+/* ── PARALLAX TILT ── */
+const scene=document.getElementById('scene');
+const tilt=document.getElementById('tilt');
+let tx=0,ty=0,cx=0,cy=0;
+scene.addEventListener('mousemove',e=>{
+  const r=scene.getBoundingClientRect();
+  tx=((e.clientX-r.left)/r.width-.5)*12;
+  ty=((e.clientY-r.top)/r.height-.5)*-6;
+});
+scene.addEventListener('mouseleave',()=>{tx=0;ty=0});
+(function loop(){cx+=(tx-cx)*.08;cy+=(ty-cy)*.08;tilt.style.transform=`rotateY(${cx}deg) rotateX(${cy}deg)`;requestAnimationFrame(loop);})();
+
+/* ── SESSION CLOCK ── */
+let t0=Date.now();
+function tick(){
+  const s=Math.floor((Date.now()-t0)/1000);
+  document.getElementById('cl-time').textContent=
+    `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  requestAnimationFrame(tick);
+}
+tick();
+
+/* ── RENDER ── */
+let currentCase=null;
+
+const human=(s)=>s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+const fmtTime=(iso)=>{try{const d=new Date(iso);return d.toISOString().replace('T',' · ').slice(0,19)}catch(e){return iso}};
+const isLive=(callId)=>!callId || callId.startsWith('calle_');
+
+function renderPipe(steps){
+  const el=document.getElementById('pipe');
+  el.innerHTML = '<span class="done">CASE OPENED</span><i>›</i><span class="done">PHONE WORK</span><i>›</i><span class="judge">VERIFIED RECOVERY</span>';
+}
+
+function renderCaseCard(c){
+  document.getElementById('case-card').style.display='grid';
+  document.getElementById('cc-location').textContent=c.location_name;
+  const st=document.getElementById('cc-status');
+  const terminal=c.state==='REOPENING_PATH_ACTIVE';
+  st.innerHTML=`<b class="status ${terminal?'path':'active'}">${terminal?'REOPENING PATH ACTIVE':c.state.replace(/_/g,' ')}</b>`;
+  document.getElementById('cc-blocker').textContent=c.blocker||'—';
+  document.getElementById('cc-why').textContent=c.why_stuck||'—';
+  document.getElementById('na-card').style.display='grid';
+  const na=(NEXT_GOALS[c.state]||[]);
+  document.getElementById('cc-next').textContent=na[0]||'—';
+  document.getElementById('cc-calle').textContent=na[1]||'—';
+  document.getElementById('cc-gate').textContent=na[2]||'—';
+  document.getElementById('cc-req').textContent=na[3]||'—';
+  document.getElementById('cl-status').textContent=`STATUS: ${terminal?'REOPENING PATH ACTIVE':c.state.replace(/_/g,' ')}`;
+}
+
+function renderEventLog(c){
+  const el=document.getElementById('cr-lines');
+  if(!c.steps.length){el.innerHTML='<div class="cr-line">No calls yet — awaiting first phone action</div>';return}
+  el.innerHTML=c.steps.map((s,i)=>{
+    const ts=new Date(s.at).toTimeString().slice(0,8);
+    const who=(s.who||'?').split(' ')[0].toLowerCase();
+    return`<div class="cr-line" style="animation:fade-up .4s ease-out ${i*.18}s both">
+      <b>${ts}</b> ${who} → <span class="ok">${s.to_state.replace(/_/g,' ')}</span>${isLive(s.call_id)?" · LIVE":''}</div>`;
+  }).join('');
+}
+
+function renderBoard(c){
+  const cur=STATES.indexOf(c.state);
+  const terminal=cur===STATES.length-1;
+  const board=document.getElementById('board');
+  let html='';
+  STATES.forEach((s,i)=>{
+    const done=i<cur||(i===cur&&terminal);
+    const isNow=i===cur&&!terminal;
+    const cls=done?'done':(isNow?'now':'future');
+    const num=('0'+(i+1)).slice(-2);
+    html+=`<div class="cell ${cls} ${terminal&&i===cur?'terminal final':''}" onclick="openDrawer(${i})" data-idx="${i}" style="transition-delay:${i*.1}s">
+      <div class="cell-top"><div class="cell-dot"></div><span class="cell-num">${num}</span></div>
+      <div class="cell-label">${LABELS[i].t}<small>${LABELS[i].s}</small></div>
+      <span class="proof-tag">${done?'EVIDENCED':isNow?'NEXT':'GATED'}</span>
+      <div class="cell-sub">${done?'✓ secured by phone evidence':isNow?'call in progress':terminal?'authority holds the next move':'blocked until evidence'}</div>
+    </div>`;
+  });
+  board.innerHTML=html;
+  setTimeout(()=>document.querySelectorAll('.cell').forEach((el,i)=>setTimeout(()=>el.classList.add('show'),i*110)),650);
+}
+
+function renderAttacks(){
+  const items=[
+    {kind:'block',at:'"Sounds like the grease trap."',verdict:'REJECTED',code:'BLOCKER_UNCONFIRMED',desc:'Vague observation — no named violation, no requirement. Board stays.'},
+    {kind:'block',at:'"We\'ll try to get someone out this afternoon."',verdict:'REJECTED',code:'PROVIDER_HEDGED',desc:'A hedge is not a commitment. No clerk time, no bookable fix.'},
+    {kind:'block',at:'Agent: "Health department approved reinspection."',verdict:'REJECTED',code:'PROOF_NOT_TRUSTED',desc:'An agent claim is not an authority record. Words never move the board.'},
+    {kind:'ok',at:'"Yes, we will service the grease trap today at 4:30 PM."',verdict:'ACCEPTED',code:'EXPLICIT + CLOCK TIME',desc:'Explicit service commitment, concrete time, responsible provider. Board moves.'}
+  ];
+  document.getElementById('attacks').innerHTML=items.map((a,i)=>`
+    <div class="attack ${a.kind}" style="transition-delay:${.6+i*.14}s">
+      <div class="at-head"><span class="at-tag">${a.kind==='block'?'rejected':'accepted'}</span><span class="at-code">${a.code}</span></div>
+      <div class="at-attack">${a.at}</div>
+      <div class="at-verdict">CONTRACTOR → ${a.verdict}</div>
+      <div class="at-desc">${a.desc}</div>
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('.attack').forEach(el=>el.classList.add('show')),900);
+}
+
+function checkDrawer(idx){
+  const step=(currentCase?.steps||[]).find(s=>s.to_state===STATES[idx]);
+  const pills=document.getElementById('drawer-pills');
+  pills.innerHTML=(currentCase?.steps||[]).map((s,i)=>{
+    const sel=(currentCase?.steps||[]).indexOf(step)===i;
+    return`<div class="step-pill" style="${sel?'background:#f4f3ef;border-color:#c8c4ba':''}" onclick="showEvidence(${idx},${i})">
+      <span class="dot"></span>${s.to_state.replace(/_/g,' ')}<em>${(s.confidence||0).toFixed(2)}</em></div>`;
+  }).join('')||'<div class="ev-row"><div class="k">No evidence</div><div class="v muted">This state has not been reached yet.</div></div>';
+}
+
+function showEvidence(idx, steppos){
+  const s=(currentCase?.steps||[])[steppos];
+  if(!s)return;
+  document.getElementById('drawer-title').innerHTML=`<span style="color:${s.to_state==='REOPENING_PATH_ACTIVE'?'var(--green)':'var(--text)'}">${s.to_state.replace(/_/g,' ')}</span><span class="arrow">»</span> evidence`;
+  const structured=s.structured||{};
+  const rows=Object.entries(structured).map(([k,v])=>{
+    let val=typeof v==='object'?JSON.stringify(v):String(v);
+    if(k==='confidence')return`<div class="ev-row"><div class="k">Confidence</div><div class="v conf">${(Number(v)*100).toFixed(0)}%</div></div>`;
+    return`<div class="ev-row"><div class="k">${k.replace(/_/g,' ')}</div><div class="v" style="${k==='reopening_date'?'color:var(--green)':''}">${val.replace(/"/g,'')}</div></div>`;
+  }).join('');
+  const secondsToHuman=(iso)=>{try{return new Date(iso).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){return iso}};
+  document.getElementById('drawer-body').innerHTML=`
+    <div class="ev-quote">"${s.statement}"</div>
+    <div class="ev-rows">
+      <div class="ev-row"><div class="k">Call</div><div class="v">${s.who||'—'}</div></div>
+      <div class="ev-row"><div class="k">Date</div><div class="v">${secondsToHuman(s.at)}${isLive(s.call_id)?' <span style="color:var(--green);font-size:9px">· LIVE CALL-E</span>':''}</div></div>
+      ${rows}
+      <div class="ev-row"><div class="k">Decision</div><div class="v"><span class="decision-badge">✓ ACCEPTED</span></div></div>
+      <div class="ev-row"><div class="k">Why</div><div class="v">${s.why||'Phone evidence passed the CONTRACTOR gate.'}</div></div>
+      <div class="ev-row"><div class="k">Call ID</div><div class="v callid">${s.call_id}</div></div>
+    </div>
+    <div class="integrity" id="integrity-box">
+      <div class="int-head" onclick="document.getElementById('integrity-box').classList.toggle('open')">
+        <span>INTEGRITY — hash-linked ledger</span><span class="ic">▾</span>
+      </div>
+      <div class="int-body">
+        <div>Append-only ledger, each step links to the previous content hash.</div>
+        <div class="chain">
+          <div><div style="color:var(--amber);font-weight:700">PREVIOUS</div><span class="h prev">${s.previous_hash}</span></div>
+          <div>→</div>
+          <div><div style="color:var(--green);font-weight:700">THIS STEP</div><span class="h steph">${s.step_hash}</span></div>
+        </div>
+        <div style="margin-top:8px;color:#999">Tampering with any step breaks the chain — verified on every load.</div>
+      </div>
+    </div>`;
+  checkDrawer(idx);
+}
+function openDrawer(idx){
+  if(!currentCase)return;
+  document.getElementById('drawer-title').innerHTML=`<span>${STATES[idx].replace(/_/g,' ')}</span><span class="arrow">»</span> evidence`;
+  checkDrawer(idx);
+  const step=(currentCase?.steps||[]).find(s=>s.to_state===STATES[idx]);
+  if(step){const pi=(currentCase?.steps||[]).indexOf(step);showEvidence(idx,pi)}
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open')}
+
+async function boot(){
+  let cases=[];
+  try{const r=await fetch('/api/cases');cases=await r.json()}catch(e){}
+  if(!cases.length){
+    document.getElementById('no-cases').style.display='block';
+    document.getElementById('board').innerHTML='<div class="cell" style="opacity:1;transform:none;grid-column:1/-1">No cases yet</div>';
+    return;
+  }
+  // pick newest non-probe case
+  const c=(cases.find(x=>!x.location_id.startsWith('probe_'))||cases[0]);
+  currentCase=c;
+  renderPipe(c);renderCaseCard(c);
+  renderEventLog(c);renderBoard(c);renderAttacks();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+boot();
+</script>
+</body>
+</html>
