@@ -15,6 +15,7 @@ import argparse
 import json
 import sqlite3
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import socketserver
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -37,9 +38,9 @@ def case_payload(db_path, c):
     why, blocker_hint = WHY_STUCK.get(c["state"], ("", ""))
     c["why_stuck"] = why
     first_step = c["steps"][0] if c["steps"] else None
-    if first_step and first_step["structured"]:
-        v = first_step["structured"].get("violation")
-        c["blocker"] = v.replace("_", " ").title() if v else None
+    if first_step and first_step.get("structured"):
+        s = first_step["structured"]
+        c["blocker"] = s.get("action", s.get("incident", "")).replace("_", " ").title() if s.get("action") or s.get("incident") else None
     else:
         c["blocker"] = None
     for s in c["steps"]:
@@ -176,6 +177,9 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
+class ReusableHTTPServer(socketserver.TCPServer):
+    allow_reuse_address = True
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", default="contractor.db")
@@ -194,10 +198,10 @@ def main():
     from contractor.passback import PassbackCase
     ps = PassbackStore(args.db)
     if not [c for c in ps.list_cases() if not c["location_id"].startswith("probe_")]:
-        PassbackCase(ps, "loc_004", "Harbor Kitchen #04")
-        print("  Seeded Harbor Kitchen #04 at CLOSED")
+        PassbackCase(ps, "loc_004", "Acme Industrial Supply")
+        print("  Seeded INCIDENT #1842 — Acme Industrial Supply at DELIVERY FAILED")
     ps.close()
-    srv = HTTPServer(("0.0.0.0", port), Handler)
+    srv = ReusableHTTPServer(("0.0.0.0", port), Handler)
     print(f"MISE dashboard: http://0.0.0.0:{port}  (db={args.db})")
     srv.serve_forever()
 
