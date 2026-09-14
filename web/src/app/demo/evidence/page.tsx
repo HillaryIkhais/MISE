@@ -22,114 +22,102 @@ export default function EvidencePage() {
   );
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="font-mono text-[10px] tracking-[0.25em] text-mise-muted uppercase mb-2">
+    <div style={{ padding: 32, maxWidth: 1280, margin: "0 auto" }}>
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "#7c7a72", textTransform: "uppercase", marginBottom: 8 }}>
           Evidence
         </div>
-        <h1 className="text-2xl font-display font-semibold text-mise-ink">
+        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: "#e8e6e1" }}>
           Proof Behind Every Transition
         </h1>
-        <p className="text-sm text-mise-muted mt-1">
+        <p style={{ fontSize: 14, color: "#7c7a72", marginTop: 4 }}>
           Every state change is backed by verifiable call evidence. Append-only, hash-linked.
         </p>
       </div>
 
       {loading ? (
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-40 bg-mise-surface border border-mise-border rounded-xl animate-pulse"
-            />
+            <div key={i} style={{ height: 160, background: "#111114", border: "1px solid #232328", borderRadius: 14 }} />
           ))}
         </div>
       ) : allSteps.length === 0 ? (
-        <div className="border border-mise-border rounded-xl bg-mise-surface p-12 text-center">
-          <FileText className="w-8 h-8 text-mise-faint mx-auto mb-3" />
-          <p className="text-sm text-mise-muted">No evidence records yet.</p>
-          <p className="text-xs text-mise-faint mt-1">
+        <div style={{ border: "1px solid #232328", borderRadius: 14, background: "#111114", padding: 48, textAlign: "center" }}>
+          <FileText size={32} color="#4a4940" style={{ margin: "0 auto 12px" }} />
+          <p style={{ fontSize: 14, color: "#7c7a72" }}>No evidence records yet.</p>
+          <p style={{ fontSize: 12, color: "#4a4940", marginTop: 4 }}>
             Run the demo to generate call evidence.
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {allSteps.map((step, i) => (
             <div
               key={step.id}
-              className="border border-mise-border rounded-xl bg-mise-surface p-6"
+              style={{ border: "1px solid #232328", borderRadius: 14, background: "#111114", padding: 24 }}
             >
-              <div className="flex items-start justify-between mb-4">
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
                 <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="font-mono text-[10px] tracking-widest text-mise-muted uppercase">
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.15em", color: "#7c7a72", textTransform: "uppercase" }}>
                       Evidence #{i + 1}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-mise-green/10 border border-mise-green/20 text-mise-green text-[10px] font-mono font-bold">
-                      <Lock className="w-2.5 h-2.5" />
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 6, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800, color: "#16a34a", background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.2)" }}>
+                      <Lock size={10} />
                       SEALED
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-mise-ink">
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: "#e8e6e1" }}>
                     {humanize(step.to_state)}
                   </h3>
                 </div>
-                <div className="text-right">
-                  <div className="font-mono text-[10px] text-mise-faint">
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#4a4940" }}>
                     {formatTime(step.at)}
                   </div>
-                  <div className="font-mono text-[9px] text-mise-faint mt-1">
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#4a4940", marginTop: 4 }}>
                     {step.caseName}
                   </div>
                 </div>
               </div>
 
-              {/* Quote */}
-              <div className="border-l-3 border-mise-green bg-mise-green-dim/20 rounded-r-lg p-4 mb-4">
-                <p className="font-display text-sm italic text-mise-ink leading-relaxed">
+              <div style={{ borderLeft: "3px solid #16a34a", background: "rgba(13,58,31,0.2)", borderRadius: "0 8px 8px 0", padding: 16, marginBottom: 16 }}>
+                <p style={{ fontFamily: "'Fraunces', serif", fontSize: 14, fontStyle: "italic", color: "#e8e6e1", lineHeight: 1.5 }}>
                   &ldquo;{step.statement}&rdquo;
                 </p>
               </div>
 
-              {/* Extracted terms */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
                 {Object.entries(step.structured).map(([key, val]) => {
                   if (key === "confidence") return null;
                   return (
-                    <div
-                      key={key}
-                      className="border border-mise-border rounded-lg p-3 bg-mise-card"
-                    >
-                      <div className="font-mono text-[9px] tracking-wider text-mise-faint uppercase mb-1">
+                    <div key={key} style={{ border: "1px solid #232328", borderRadius: 10, padding: 12, background: "#161619" }}>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.1em", color: "#4a4940", textTransform: "uppercase", marginBottom: 4 }}>
                         {humanize(key)}
                       </div>
-                      <div className="text-sm font-bold text-mise-ink">
-                        {typeof val === "object"
-                          ? JSON.stringify(val)
-                          : String(val)}
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#e8e6e1" }}>
+                        {typeof val === "object" ? JSON.stringify(val) : String(val)}
                       </div>
                     </div>
                   );
                 })}
-                <div className="border border-mise-border rounded-lg p-3 bg-mise-card">
-                  <div className="font-mono text-[9px] tracking-wider text-mise-faint uppercase mb-1">
+                <div style={{ border: "1px solid #232328", borderRadius: 10, padding: 12, background: "#161619" }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.1em", color: "#4a4940", textTransform: "uppercase", marginBottom: 4 }}>
                     Confidence
                   </div>
-                  <div className="text-sm font-bold text-mise-green">
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#16a34a" }}>
                     {Math.round(step.confidence * 100)}%
                   </div>
                 </div>
               </div>
 
-              {/* Chain */}
-              <div className="flex items-center gap-3 text-[10px] font-mono text-mise-faint">
-                <Hash className="w-3 h-3" />
-                <span className="truncate max-w-xs">
+              <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "#4a4940" }}>
+                <Hash size={12} />
+                <span style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   PREV: {step.previous_hash.slice(0, 16)}…
                 </span>
-                <ArrowRight className="w-3 h-3" />
-                <span className="truncate max-w-xs text-mise-green">
+                <ArrowRight size={12} />
+                <span style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#16a34a" }}>
                   STEP: {step.step_hash.slice(0, 16)}…
                 </span>
               </div>
