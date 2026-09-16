@@ -20,6 +20,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).parent
+OUTDIR = ROOT / "web" / "out"          # prebuilt Next.js static export
+LEGACY = ROOT / "ui" / "index.html"    # fallback single-page prototype
 
 from contractor.passback import (
     PassbackStore, NEXT_ACTION, WHY_STUCK, STEP_WHO, STEP_WHY,
@@ -128,10 +130,39 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send(b"not found", "application/json", 404)
 
+    def _static(self, rel: str):
+        """Resolve a URL path against the Next.js export (web/out) or legacy UI."""
+        base = OUTDIR if OUTDIR.is_dir() else ROOT / "ui"
+        if rel in ("", "/"):
+            files = [base / "index.html"]
+        elif Path(rel).suffix:
+            files = [base / rel.lstrip("/")]
+        else:
+            files = [base / rel.lstrip("/") / "index.html",
+                     base / (rel.lstrip("/") + ".html")]
+        for f in files:
+            if not f.is_file():
+                continue
+            ctype = ("text/css" if f.suffix == ".css" else
+                     "application/javascript" if f.suffix == ".js" else
+                     "text/javascript" if f.suffix == ".mjs" else
+                     "application/json" if f.suffix == ".json" else
+                     "image/svg+xml" if f.suffix == ".svg" else
+                     "image/x-icon" if f.suffix == ".ico" else
+                     "text/html")
+            return self._send(f.read_bytes(), ctype)
+        return None
+
     def do_GET(self):
         p = urlparse(self.path).path
         if p in ("/", "/index.html", "/index"):
-            self._send((ROOT / "ui" / "index.html").read_bytes(), "text/html")
+            if self._static("/") is not None:
+                return
+            self._send(b"<h1>MISE: run `npm run build --prefix web`</h1>", "text/html")
+        elif p.startswith("/_next/") or p.startswith("/icons/"):
+            if self._static(p) is not None:
+                return
+            self._send(b"not found", "text/plain", 404)
         elif p == "/api/commitments":
             conn = sqlite3.connect(self.db_path)
             rows = dicts(conn, "SELECT * FROM commitments ORDER BY created_at")
@@ -171,7 +202,10 @@ class Handler(BaseHTTPRequestHandler):
             ps.close()
             self._send(json.dumps(out).encode(), "application/json")
         else:
-            self._send(b"not found", "application/json", 404)
+            # client-side routes (e.g. /demo/incident) resolve from the static export
+            if self._static(p) is not None:
+                return
+            self._send(b"not found", "text/plain", 404)
 
     def log_message(self, *a):
         pass

@@ -1,8 +1,10 @@
 services:
   - type: web
     name: mise
-    runtime: python
+    runtime: shell
     plan: free
+    buildCommand: npm install --prefix web && npm run build --prefix web
+    startCommand: python3 server.py --db contractor.db
     envVars:
       - key: CALLE_API_KEY
         sync: false
@@ -10,5 +12,5 @@ services:
         sync: false
       - key: CALLE_PHONE
         sync: false
-    buildCommand: ""
-    startCommand: python3 server.py --db contractor.db
+      - key: PORT
+        value: 8080
