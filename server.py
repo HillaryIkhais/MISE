@@ -198,6 +198,10 @@ class Handler(BaseHTTPRequestHandler):
         elif p == "/api/cases":
             ps = PassbackStore(self.db_path)
             cases = [c for c in ps.list_cases() if not c["location_id"].startswith("probe_")]
+            if not cases:
+                from contractor.passback import PassbackCase
+                PassbackCase(ps, "loc_004", "Torque Precision")
+                cases = [c for c in ps.list_cases() if not c["location_id"].startswith("probe_")]
             out = [case_payload(self.db_path, c) for c in cases]
             ps.close()
             self._send(json.dumps(out).encode(), "application/json")
