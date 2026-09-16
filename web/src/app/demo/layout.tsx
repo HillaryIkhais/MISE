@@ -8,9 +8,9 @@ export default function DemoLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0c" }}>
+    <div className="ds-shell">
       <Sidebar />
-      <main style={{ marginLeft: 224, minHeight: "100vh" }}>{children}</main>
+      <main className="ds-main">{children}</main>
     </div>
   );
 }

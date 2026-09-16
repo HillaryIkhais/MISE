@@ -77,38 +77,65 @@ export default function SecurityLabPage() {
   };
 
   return (
-    <div style={{ padding: 32, maxWidth: 1280, margin: "0 auto" }}>
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-          <Shield size={18} color="#dc2626" />
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "#dc2626", textTransform: "uppercase" }}>
-            Security Lab
-          </span>
+    <div className="ds-page">
+      <div className="ds-header">
+        <div className="ds-kicker" style={{ color: "#dc2626" }}>
+          <Shield size={13} />
+          Security Lab
         </div>
-        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: "#e8e6e1" }}>
-          Try to Make MISE Lie
-        </h1>
-        <p style={{ fontSize: 14, color: "#7c7a72", marginTop: 4 }}>
+        <h1 className="ds-h1">Try to Make MISE Lie</h1>
+        <p className="ds-sub">
           MISE should refuse to advance the workflow when evidence is insufficient.
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 340px",
+          gap: 24,
+          alignItems: "start",
+        }}
+      >
+        <div className="ds-stack">
           {attacks.map((attack, i) => (
             <div
               key={i}
+              className="ds-card"
               style={{
-                border: "1px solid " + (attack.result === "BLOCKED" ? "rgba(220,38,38,0.3)" : "#232328"),
-                borderRadius: 14,
                 padding: 20,
-                background: attack.result === "BLOCKED" ? "rgba(58,15,15,0.2)" : "#111114",
-                transition: "all 0.3s",
+                borderRadius: 14,
+                borderColor:
+                  attack.result === "BLOCKED"
+                    ? "rgba(220,38,38,0.35)"
+                    : "var(--ds-border)",
+                background:
+                  attack.result === "BLOCKED"
+                    ? "rgba(58,18,20,0.28)"
+                    : "var(--ds-surface-2)",
+                transition: "all 0.3s ease",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  marginBottom: 14,
+                }}
+              >
                 <div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.1em", color: "#7c7a72", textTransform: "uppercase", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 10,
+                      letterSpacing: "0.1em",
+                      color: "#8a887f",
+                      textTransform: "uppercase",
+                      marginBottom: 4,
+                    }}
+                  >
                     Attack {(i + 1).toString().padStart(2, "0")}
                   </div>
                   <h3 style={{ fontSize: 14, fontWeight: 700, color: "#e8e6e1" }}>
@@ -116,30 +143,45 @@ export default function SecurityLabPage() {
                   </h3>
                 </div>
                 {attack.result && (
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    padding: "4px 10px", borderRadius: 6,
-                    fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 800,
-                    background: attack.result === "BLOCKED" ? "#dc2626" : "#16a34a",
-                    color: "#fff",
-                  }}>
-                    {attack.result === "BLOCKED" ? <XCircle size={12} /> : <CheckCircle2 size={12} />}
+                  <span className="ds-badge solid red">
+                    {attack.result === "BLOCKED" ? (
+                      <XCircle size={12} />
+                    ) : (
+                      <CheckCircle2 size={12} />
+                    )}
                     {attack.result}
                   </span>
                 )}
               </div>
 
-              <div style={{ border: "1px solid #232328", borderRadius: 10, padding: 12, background: "#161619", marginBottom: 12 }}>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.1em", color: "#4a4940", textTransform: "uppercase", marginBottom: 4 }}>
-                  Payload
-                </div>
-                <p style={{ fontFamily: "'Fraunces', serif", fontSize: 14, fontStyle: "italic", color: "#e8e6e1" }}>
+              <div className="ds-kv" style={{ marginBottom: 12 }}>
+                <div className="ds-kv-k">Payload</div>
+                <p
+                  style={{
+                    fontFamily: "'Fraunces', serif",
+                    fontSize: 14,
+                    fontStyle: "italic",
+                    color: "#e8e6e1",
+                    fontWeight: 400,
+                    lineHeight: 1.4,
+                  }}
+                >
                   &ldquo;{attack.input}&rdquo;
                 </p>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#4a4940" }}>
+              <div
+                className="ds-row"
+                style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}
+              >
+                <span
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 9,
+                    color: "#55534b",
+                    letterSpacing: "0.06em",
+                  }}
+                >
                   Expected: {attack.code}
                 </span>
                 <Button
@@ -148,20 +190,31 @@ export default function SecurityLabPage() {
                   onClick={() => runAttack(i)}
                   disabled={running !== null || attack.result !== null}
                 >
-                  {running === i ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Play size={12} />}
+                  {running === i ? (
+                    <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                  ) : (
+                    <Play size={12} />
+                  )}
                   Run Attack
                 </Button>
               </div>
 
               {attack.detail && (
-                <div style={{ marginTop: 12, fontSize: 12, color: "rgba(220,38,38,0.7)" }}>
+                <div
+                  style={{
+                    marginTop: 12,
+                    fontSize: 12,
+                    color: "rgba(220,38,38,0.8)",
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                >
                   {attack.detail}
                 </div>
               )}
             </div>
           ))}
 
-          <div style={{ display: "flex", gap: 12 }}>
+          <div className="ds-row" style={{ marginTop: 4 }}>
             <Button variant="danger" onClick={runAll} disabled={running !== null}>
               <Play size={12} />
               Run All Attacks
@@ -172,28 +225,64 @@ export default function SecurityLabPage() {
           </div>
         </div>
 
-        <div style={{ border: "1px solid #232328", borderRadius: 14, background: "#111114", padding: 20 }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "#7c7a72", textTransform: "uppercase", marginBottom: 16 }}>
+        <div className="ds-card ds-card-pad" style={{ position: "sticky", top: 24 }}>
+          <div className="ds-card-title" style={{ marginBottom: 16 }}>
             Event Stream
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 500, overflowY: "auto" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              maxHeight: 500,
+              overflowY: "auto",
+            }}
+          >
             {log.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "32px 0" }}>
-                <AlertTriangle size={24} color="#4a4940" style={{ margin: "0 auto 8px" }} />
-                <p style={{ fontSize: 12, color: "#4a4940" }}>
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <div className="ds-empty-icon">
+                  <AlertTriangle size={24} color="#55534b" />
+                </div>
+                <p style={{ fontSize: 12, color: "#55534b" }}>
                   Run an attack to see events
                 </p>
               </div>
             ) : (
               log.map((entry, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "8px 0", borderBottom: "1px solid #232328" }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#4a4940", flexShrink: 0, paddingTop: 2 }}>
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 12,
+                    padding: "10px 0",
+                    borderBottom: "1px solid #1b1b20",
+                    animation: "fadeInUp 0.3s ease-out both",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 9,
+                      color: "#55534b",
+                      flexShrink: 0,
+                      paddingTop: 2,
+                    }}
+                  >
                     {entry.time}
                   </span>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700,
-                    color: entry.type === "attack" ? "#dc2626" : entry.type === "policy" ? "#c6a96b" : "#dc2626",
-                  }}>
+                  <span
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color:
+                        entry.type === "attack"
+                          ? "#dc2626"
+                          : entry.type === "policy"
+                            ? "#c6a96b"
+                            : "#dc2626",
+                    }}
+                  >
                     {entry.event}
                   </span>
                 </div>
