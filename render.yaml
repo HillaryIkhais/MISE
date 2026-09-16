@@ -1,7 +1,7 @@
 services:
   - type: web
     name: mise
-    runtime: shell
+    runtime: python
     plan: free
     buildCommand: npm install --prefix web && npm run build --prefix web
     startCommand: python3 server.py --db contractor.db
