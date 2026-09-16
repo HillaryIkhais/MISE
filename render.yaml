@@ -3,7 +3,7 @@ services:
     name: mise
     runtime: python
     plan: free
-    buildCommand: npm install --prefix web && npm run build --prefix web
+    buildCommand: rm -rf web/out && npm install --prefix web && npm run build --prefix web
     startCommand: python3 server.py --db contractor.db
     envVars:
       - key: CALLE_API_KEY
